@@ -7,7 +7,7 @@
 export {
   TeamManager,
   type TeamConfig,
-  type Teammate,
+  type TeammateInfo,
   type TeammateRole,
 } from './team-manager.js';
 export {
@@ -19,10 +19,16 @@ export {
 export {
   TeammateMessaging,
   type TeamMessage,
+  type MessageType,
   type TeammateMessagingOptions,
 } from './teammate-messaging.js';
 export {
   TmuxDisplay,
   type TmuxPane,
   type TmuxDisplayOptions,
+  type TerminalBackend,
 } from './tmux-display.js';
+export {
+  TeammateAgentTool,
+  TEAMMATE_AGENT_TOOL_NAME,
+} from './teammate-agent-tool.js';

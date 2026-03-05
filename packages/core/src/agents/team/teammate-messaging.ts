@@ -6,17 +6,25 @@
 
 /**
  * Inter-agent messaging via file-based message queues.
- * Each teammate has an inbox directory where other agents can drop messages.
+ * Supports direct messages, broadcasts, and peer-to-peer communication
+ * between any teammates (not just lead-to-worker).
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+export type MessageType =
+  | 'request'
+  | 'response'
+  | 'broadcast'
+  | 'status'
+  | 'peer';
+
 export interface TeamMessage {
   id: string;
   from: string;
   to: string;
-  type: 'request' | 'response' | 'broadcast' | 'status';
+  type: MessageType;
   content: string;
   timestamp: number;
   metadata?: Record<string, unknown>;
@@ -32,6 +40,7 @@ export interface TeammateMessagingOptions {
 /**
  * File-based IPC messaging system for agent teams.
  * Each agent has a directory-based inbox. Messages are JSON files.
+ * Any agent can send messages to any other agent (peer-to-peer).
  */
 export class TeammateMessaging {
   private readonly baseDir: string;
@@ -42,6 +51,13 @@ export class TeammateMessaging {
     this.baseDir = options.baseDir;
     this.maxMessages = options.maxMessagesPerInbox ?? 50;
     fs.mkdirSync(this.baseDir, { recursive: true });
+  }
+
+  /**
+   * Get the base directory for external reference.
+   */
+  getBaseDir(): string {
+    return this.baseDir;
   }
 
   /**
@@ -58,12 +74,12 @@ export class TeammateMessaging {
   send(
     from: string,
     to: string,
-    type: TeamMessage['type'],
+    type: MessageType,
     content: string,
     metadata?: Record<string, unknown>,
   ): TeamMessage {
     const msg: TeamMessage = {
-      id: `msg-${this.nextMsgId++}`,
+      id: `msg-${this.nextMsgId++}-${Date.now()}`,
       from,
       to,
       type,
@@ -75,11 +91,26 @@ export class TeammateMessaging {
     const inboxDir = this.getInboxDir(to);
     fs.mkdirSync(inboxDir, { recursive: true });
 
+    // Write atomically via temp + rename
     const filePath = path.join(inboxDir, `${msg.id}.json`);
-    fs.writeFileSync(filePath, JSON.stringify(msg, null, 2));
+    const tmpPath = `${filePath}.tmp`;
+    fs.writeFileSync(tmpPath, JSON.stringify(msg, null, 2));
+    fs.renameSync(tmpPath, filePath);
 
     this.pruneInbox(to);
     return msg;
+  }
+
+  /**
+   * Send a peer-to-peer message between any two agents.
+   */
+  sendPeer(
+    from: string,
+    to: string,
+    content: string,
+    metadata?: Record<string, unknown>,
+  ): TeamMessage {
+    return this.send(from, to, 'peer', content, metadata);
   }
 
   /**
@@ -108,14 +139,34 @@ export class TeammateMessaging {
 
     for (const file of files) {
       const filePath = path.join(inboxDir, file);
-      const content = fs.readFileSync(filePath, 'utf-8');
-      const parsed: unknown = JSON.parse(content);
-      if (isTeamMessage(parsed)) {
-        messages.push(parsed);
+      try {
+        const content = fs.readFileSync(filePath, 'utf-8');
+        const parsed: unknown = JSON.parse(content);
+        if (isTeamMessage(parsed)) {
+          messages.push(parsed);
+        }
+      } catch {
+        // Skip corrupted messages
       }
     }
 
     return messages.sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  /**
+   * Read and consume messages (read then clear).
+   */
+  consumeInbox(agentName: string): TeamMessage[] {
+    const messages = this.readInbox(agentName);
+    this.clearInbox(agentName);
+    return messages;
+  }
+
+  /**
+   * Read messages from a specific sender.
+   */
+  readMessagesFrom(agentName: string, from: string): TeamMessage[] {
+    return this.readInbox(agentName).filter((m) => m.from === from);
   }
 
   /**
@@ -127,8 +178,23 @@ export class TeammateMessaging {
 
     const files = fs.readdirSync(inboxDir).filter((f) => f.endsWith('.json'));
     for (const file of files) {
-      fs.unlinkSync(path.join(inboxDir, file));
+      try {
+        fs.unlinkSync(path.join(inboxDir, file));
+      } catch {
+        // File may already be deleted
+      }
     }
+  }
+
+  /**
+   * Get all registered agent names (based on inbox directories).
+   */
+  getRegisteredAgents(): string[] {
+    if (!fs.existsSync(this.baseDir)) return [];
+    return fs
+      .readdirSync(this.baseDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
   }
 
   /**
@@ -152,8 +218,12 @@ export class TeammateMessaging {
     const inboxDir = this.getInboxDir(agentName);
     for (const msg of toRemove) {
       const filePath = path.join(inboxDir, `${msg.id}.json`);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch {
+        // File may already be deleted
       }
     }
   }
