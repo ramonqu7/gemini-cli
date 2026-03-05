@@ -48,6 +48,74 @@ async function copyAction(context: CommandContext) {
 }
 
 /**
+ * /plan auto - Approve the plan and execute steps autonomously with
+ * checkpoints and test verification between each step.
+ */
+async function autoAction(context: CommandContext) {
+  const config = context.services.config;
+  if (!config) {
+    debugLogger.debug(
+      'Plan auto command: config is not available in context',
+    );
+    return;
+  }
+
+  const planExec = config.getPlanExecutionService();
+  const state = planExec.getState();
+
+  if (!state) {
+    coreEvents.emitFeedback(
+      'warning',
+      'No plan to execute. The model must first create a numbered plan.',
+    );
+    return;
+  }
+
+  if (state.status !== 'planning') {
+    coreEvents.emitFeedback(
+      'warning',
+      `Plan is already in "${state.status}" status. Cannot approve again.`,
+    );
+    return;
+  }
+
+  const approved = planExec.approvePlan();
+  if (!approved) {
+    coreEvents.emitFeedback('error', 'Failed to approve plan (no steps).');
+    return;
+  }
+
+  // Enable autonomous execution mode
+  planExec.setAutonomous(true);
+
+  // Clear context for fresh execution
+  const geminiClient = config.getGeminiClient();
+  if (geminiClient) {
+    coreEvents.emitFeedback(
+      'info',
+      `Plan approved for autonomous execution (max ${planExec.getMaxAutonomousSteps()} steps before pause).`,
+    );
+    await geminiClient.resetChat();
+    context.ui.clear();
+  }
+
+  // Switch to auto_edit mode for execution
+  config.setApprovalMode(ApprovalMode.AUTO_EDIT);
+
+  // Refresh system prompt — autonomous step prompt will be injected
+  geminiClient?.updateSystemInstruction();
+
+  coreEvents.emitFeedback(
+    'info',
+    'Autonomous execution started. The model will checkpoint and test after each step.',
+  );
+  context.ui.addItem({
+    type: MessageType.GEMINI,
+    text: planExec.formatPlan(),
+  });
+}
+
+/**
  * /plan approve - Approve the current plan and begin step-by-step execution.
  */
 async function approveAction(context: CommandContext) {
@@ -363,6 +431,14 @@ export const planCommand: SlashCommand = {
       kind: CommandKind.BUILT_IN,
       autoExecute: true,
       action: approveAction,
+    },
+    {
+      name: 'auto',
+      description:
+        'Approve the plan and execute autonomously with checkpoints and test verification',
+      kind: CommandKind.BUILT_IN,
+      autoExecute: true,
+      action: autoAction,
     },
     {
       name: 'next',

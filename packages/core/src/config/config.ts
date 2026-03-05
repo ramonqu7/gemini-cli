@@ -160,6 +160,8 @@ import { ContextBuilder } from '../safety/context-builder.js';
 import { CheckerRegistry } from '../safety/registry.js';
 import { ConsecaSafetyChecker } from '../safety/conseca/conseca.js';
 import { PlanExecutionService } from '../services/planExecutionService.js';
+import { LintService } from '../services/lintService.js';
+import { VerifyLoopService } from '../services/verifyLoopService.js';
 import { FileReadTracker } from '../services/fileReadTracker.js';
 
 export interface AccessibilitySettings {
@@ -821,6 +823,8 @@ export class Config implements McpContext {
   readonly userHintService: UserHintService;
   private approvedPlanPath: string | undefined;
   private readonly planExecutionService: PlanExecutionService;
+  private readonly lintService: LintService;
+  private readonly verifyLoopService: VerifyLoopService;
   private readonly thinkingSettings: ThinkingSettings;
 
   constructor(params: ConfigParameters) {
@@ -828,6 +832,8 @@ export class Config implements McpContext {
     this.clientVersion = params.clientVersion ?? 'unknown';
     this.approvedPlanPath = undefined;
     this.planExecutionService = new PlanExecutionService();
+    this.lintService = new LintService(process.cwd());
+    this.verifyLoopService = new VerifyLoopService(process.cwd());
     this.thinkingSettings = params.thinking ?? { dynamicBudget: true };
     this.embeddingModel =
       params.embeddingModel ?? DEFAULT_GEMINI_EMBEDDING_MODEL;
@@ -2332,6 +2338,20 @@ export class Config implements McpContext {
    */
   getPlanExecutionService(): PlanExecutionService {
     return this.planExecutionService;
+  }
+
+  /**
+   * Returns the lint service for detecting and running project linters.
+   */
+  getLintService(): LintService {
+    return this.lintService;
+  }
+
+  /**
+   * Returns the verify loop service for detecting and running project tests.
+   */
+  getVerifyLoopService(): VerifyLoopService {
+    return this.verifyLoopService;
   }
 
   getThinkingSettings(): ThinkingSettings {

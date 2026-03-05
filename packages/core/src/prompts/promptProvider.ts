@@ -31,11 +31,75 @@ import {
 import { resolveModel, supportsModernFeatures } from '../config/models.js';
 import { DiscoveredMCPTool } from '../tools/mcp-tool.js';
 import { getAllGeminiMdFilenames } from '../tools/memoryTool.js';
+import { RepoMapService } from '../services/repoMapService.js';
+import { detectRepoMapTrigger } from '../services/repoMapTrigger.js';
+import { OncallOrchestratorService } from '../services/oncallOrchestratorService.js';
+
+/** Max repo map injection size in characters (~3KB). */
+const REPO_MAP_MAX_CHARS = 3072;
+
+/** Approximate chars-per-token for budget calculation. */
+const CHARS_PER_TOKEN = 4;
 
 /**
  * Orchestrates prompt generation by gathering context and building options.
  */
 export class PromptProvider {
+  private repoMapService = new RepoMapService();
+  private oncallOrchestrator = new OncallOrchestratorService();
+
+  /**
+   * Build a `<repo_map>` context block for the given user prompt, if a
+   * trigger is detected. Returns an empty string when no map is relevant.
+   *
+   * Call this per-turn and inject the result alongside dynamic context.
+   *
+   * @param prompt   The raw user prompt text.
+   * @param rootDir  The project root directory.
+   */
+  async getRepoMapContext(prompt: string, rootDir: string): Promise<string> {
+    const scope = detectRepoMapTrigger(prompt, rootDir);
+    if (!scope) return '';
+
+    try {
+      const map = await this.repoMapService.buildScopedMap(rootDir, scope);
+      if (map.files.length === 0) return '';
+
+      const maxTokens = Math.floor(REPO_MAP_MAX_CHARS / CHARS_PER_TOKEN);
+      const condensed = this.repoMapService.getCondensedMap(map, maxTokens);
+      if (!condensed.trim()) return '';
+
+      return `<repo_map scope="${scope.kind}:${path.relative(rootDir, scope.target)}">\n${condensed}\n</repo_map>`;
+    } catch {
+      // Repo map is best-effort; never break the prompt pipeline.
+      return '';
+    }
+  }
+
+  /** Invalidate repo map cache for a directory (e.g. after file mutations). */
+  invalidateRepoMap(dirPath: string): void {
+    this.repoMapService.invalidateScope(dirPath);
+  }
+
+  /**
+   * Checks user prompt for production issue signals and returns an
+   * investigation prompt injection if a trigger is detected.
+   *
+   * The returned string is a self-contained investigation guide that should
+   * be appended to the system instruction for the current turn. It tells the
+   * model WHAT to investigate and HOW, using existing MCP production tools.
+   *
+   * Returns an empty string when no oncall trigger is detected.
+   *
+   * @param userPrompt The raw user prompt text.
+   */
+  getOncallInvestigationContext(userPrompt: string): string {
+    const trigger = this.oncallOrchestrator.detectOncallTrigger(userPrompt);
+    if (!trigger) return '';
+
+    return this.oncallOrchestrator.generateInvestigationPrompt(trigger);
+  }
+
   /**
    * Generates the core system prompt.
    */
@@ -187,6 +251,8 @@ export class PromptProvider {
             interactive: interactiveMode,
             enableShellEfficiency: config.getEnableShellOutputEfficiency(),
             interactiveShellEnabled: config.isInteractiveShellEnabled(),
+            lintPrompt: config.getLintService().formatLintPrompt(),
+            verifyPrompt: config.getVerifyLoopService().formatVerifyPrompt(),
           }),
         ),
         sandbox: this.withSection('sandbox', () => getSandboxMode()),

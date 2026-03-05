@@ -71,6 +71,10 @@ export interface PrimaryWorkflowsOptions {
 export interface OperationalGuidelinesOptions {
   interactive: boolean;
   interactiveShellEnabled: boolean;
+  /** Lint prompt snippet to append to tool usage section (from LintService). */
+  lintPrompt?: string;
+  /** Verify/test prompt snippet to append to tool usage section (from VerifyLoopService). */
+  verifyPrompt?: string;
 }
 
 export type SandboxMode = 'macos-seatbelt' | 'generic' | 'outside';
@@ -359,6 +363,13 @@ Skipping verification is the single most common source of compounding errors. A 
 **Goal:** Autonomously implement and deliver a visually appealing, substantially complete, and functional prototype with rich aesthetics. Users judge applications by their visual impact; ensure they feel modern, "alive," and polished through consistent spacing, interactive feedback, and platform-appropriate design.
 
 ${newApplicationSteps(options)}
+
+## Search Strategy
+
+When investigating code structure or answering questions about how the codebase is organized:
+- **Structure questions** ("what calls X?", "what does this module export?") — use the repo_map context (if provided) combined with ${formatToolName(GREP_TOOL_NAME)} to trace relationships.
+- **Content questions** ("find error handling", "where are retries configured") — use code search tools (MCP or ${formatToolName(GREP_TOOL_NAME)}) to find specific patterns.
+- **Combined** — use repo_map for structural overview first, then code search for implementation details.
 `.trim();
 }
 
@@ -407,8 +418,19 @@ Guidelines for insights:
 - **Command Execution:** Use the ${formatToolName(SHELL_TOOL_NAME)} tool for running shell commands, remembering the safety rule to explain modifying commands first.${toolUsageInteractive(
     options.interactive,
     options.interactiveShellEnabled,
-  )}${toolUsageRememberingFacts(options)}
+  )}${toolUsageRememberingFacts(options)}${options.verifyPrompt ?? ''}${options.lintPrompt ?? ''}
 - **Confirmation Protocol:** If a tool call is declined or cancelled, respect the decision immediately. Do not re-attempt the action or "negotiate" for the same tool call unless the user explicitly directs you to. Offer an alternative technical path if possible.
+
+## Production Debugging Protocol
+When investigating a production issue:
+1. Gather context FIRST (metrics, incidents, recent changes) -- use batch tools for parallel queries
+2. Correlate: timeline of changes vs symptom onset
+3. Narrow: which service, endpoint, change caused it
+4. Mitigate BEFORE root cause (stop the bleeding)
+5. Root cause: trace the exact failure path
+6. Document: file bug, update runbook if needed
+
+Always check knowledge base for similar past incidents before starting fresh investigation.
 
 ## Interaction Details
 - **Help Command:** The user can use '/help' to display help information.

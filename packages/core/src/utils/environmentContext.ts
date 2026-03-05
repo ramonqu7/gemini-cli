@@ -9,6 +9,7 @@ import type { Config } from '../config/config.js';
 import { getFolderStructure } from './getFolderStructure.js';
 import { loadAutoMemories } from '../services/autoMemoryService.js';
 import { KnowledgeBaseService } from '../services/knowledgeBaseService.js';
+import { TeamKnowledgeService } from '../services/teamKnowledgeService.js';
 
 export const INITIAL_HISTORY_LENGTH = 1;
 
@@ -76,6 +77,26 @@ export async function getEnvironmentContext(config: Config): Promise<Part[]> {
     ? `\n${knowledgeContext}`
     : '';
 
+  // Load team knowledge context from shared directories
+  let teamKnowledgeSection = '';
+  try {
+    const teamKnowledge = new TeamKnowledgeService();
+    const teamSources =
+      (config as unknown as Record<string, unknown>)['teamKnowledgeSources'] as
+        | string[]
+        | undefined;
+    if (teamSources && teamSources.length > 0) {
+      teamKnowledge.setSources(teamSources);
+      await teamKnowledge.loadFromSources();
+      const teamContext = teamKnowledge.formatTeamContext('');
+      if (teamContext) {
+        teamKnowledgeSection = `\n${teamContext}`;
+      }
+    }
+  } catch {
+    // Team knowledge is optional; ignore failures
+  }
+
   const context = `
 <session_context>
 This is the Gemini CLI. We are setting up the context for our chat.
@@ -84,7 +105,7 @@ My operating system is: ${platform}
 The project's temporary directory is: ${tempDir}
 ${directoryContext}
 
-${environmentMemory}${autoMemorySection}${knowledgeSection}
+${environmentMemory}${autoMemorySection}${knowledgeSection}${teamKnowledgeSection}
 </session_context>`.trim();
 
   const initialParts: Part[] = [{ text: context }];

@@ -69,6 +69,32 @@ const BULLET_STEP_PATTERN = /^\s*[-*]\s+(.+)/;
  */
 export class PlanExecutionService {
   private plan: ExecutionPlan | null = null;
+  private autonomous = false;
+  private readonly maxAutonomousSteps = 10;
+
+  /**
+   * Enable or disable autonomous execution mode.
+   * When autonomous, the model executes steps without waiting for user
+   * approval between steps, creating checkpoints and running tests after each.
+   */
+  setAutonomous(value: boolean): void {
+    this.autonomous = value;
+  }
+
+  /**
+   * Returns true if autonomous execution mode is enabled.
+   */
+  isAutonomous(): boolean {
+    return this.autonomous;
+  }
+
+  /**
+   * Returns the maximum number of steps the model may execute autonomously
+   * before pausing for user review.
+   */
+  getMaxAutonomousSteps(): number {
+    return this.maxAutonomousSteps;
+  }
 
   /**
    * Parse a numbered plan from model output text.
@@ -408,9 +434,26 @@ export class PlanExecutionService {
       sections.push(`\nUpcoming steps:\n${pendingSteps}`);
     }
 
-    sections.push(
-      '\nFocus on THIS step only. When done, report what you accomplished and wait for approval before proceeding.',
-    );
+    if (this.autonomous) {
+      const completedCount = this.plan.steps.filter(
+        (s) => s.status === 'completed',
+      ).length;
+      const remaining = this.maxAutonomousSteps - completedCount;
+
+      sections.push(`
+AUTONOMOUS MODE — Execute this step, then:
+1. Create a checkpoint (commit current changes).
+2. Run the project's test suite to verify your changes.
+3. If tests pass: report briefly and proceed to the next step immediately.
+4. If tests fail: STOP and explain what went wrong. Do not proceed.
+5. After completing ${this.maxAutonomousSteps} steps total (${remaining} remaining), pause for user review regardless of test results.
+
+Do NOT wait for user approval between steps — keep going until tests fail or the step limit is reached.`);
+    } else {
+      sections.push(
+        '\nFocus on THIS step only. When done, report what you accomplished and wait for approval before proceeding.',
+      );
+    }
 
     return sections.join('\n');
   }
@@ -420,5 +463,6 @@ export class PlanExecutionService {
    */
   reset(): void {
     this.plan = null;
+    this.autonomous = false;
   }
 }
