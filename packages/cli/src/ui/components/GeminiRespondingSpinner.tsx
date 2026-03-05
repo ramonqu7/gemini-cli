@@ -28,11 +28,17 @@ interface GeminiRespondingSpinnerProps {
    * even if the state is Responding.
    */
   isHookActive?: boolean;
+  color?: string;
 }
 
 export const GeminiRespondingSpinner: React.FC<
   GeminiRespondingSpinnerProps
-> = ({ nonRespondingDisplay, spinnerType = 'dots', isHookActive = false }) => {
+> = ({
+  nonRespondingDisplay,
+  spinnerType = 'dots',
+  isHookActive = false,
+  color,
+}) => {
   const streamingState = useStreamingContext();
   const isScreenReaderEnabled = useIsScreenReaderEnabled();
 
@@ -51,7 +57,7 @@ export const GeminiRespondingSpinner: React.FC<
     return isScreenReaderEnabled ? (
       <Text>{SCREEN_READER_LOADING}</Text>
     ) : (
-      <Text color={theme.text.primary}>{nonRespondingDisplay}</Text>
+      <Text color={color ?? theme.text.primary}>{nonRespondingDisplay}</Text>
     );
   }
 

@@ -70,7 +70,6 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
   const showTips = loadingPhrases === 'tips' || loadingPhrases === 'all';
   const showWit = loadingPhrases === 'witty' || loadingPhrases === 'all';
 
-  // For this PR we are gating the new experimental layout behind footerLayoutRefresh.
   const isExperimentalLayout = settings.merged.ui.footerLayoutRefresh === true;
   const showUiDetails = uiState.cleanUiDetailsVisible;
   const suggestionsPosition = isAlternateBuffer ? 'above' : 'below';
@@ -144,8 +143,10 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
     return () => clearTimeout(timeout);
   }, [canShowShortcutsHint]);
 
-  // Use the setting if provided, otherwise default to true for the new UX.
-  // This allows tests to override the collapse behavior.
+  /**
+   * Use the setting if provided, otherwise default to true for the new UX.
+   * This allows tests to override the collapse behavior.
+   */
   const shouldCollapseDuringApproval =
     (settings.merged.ui as Record<string, unknown>)[
       'collapseDrawerDuringApproval'
@@ -232,6 +233,10 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
       showShortcutsHint ||
       hasUserHooks);
 
+  /**
+   * Calculate the estimated length of the status message to avoid collisions
+   * with the tips/wit area.
+   */
   let estimatedStatusLength = 0;
   if (isExperimentalLayout && hasUserHooks) {
     const hookLabel =
@@ -243,22 +248,26 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
           (h.index && h.total && h.total > 1 ? ` (${h.index}/${h.total})` : ''),
       )
       .join(', ');
-    estimatedStatusLength = hookLabel.length + hookNames.length + 10; // +10 for spinner and spacing
+    estimatedStatusLength = hookLabel.length + hookNames.length + 10;
   } else if (showLoadingIndicator) {
     const thoughtText = uiState.thought?.subject || GENERIC_WORKING_LABEL;
     const inlineWittyLength =
       showWit && uiState.currentWittyPhrase
         ? uiState.currentWittyPhrase.length + 1
         : 0;
-    estimatedStatusLength = thoughtText.length + 25 + inlineWittyLength; // Spinner(3) + timer(15) + padding + witty
+    estimatedStatusLength = thoughtText.length + 25 + inlineWittyLength;
   } else if (hasPendingActionRequired) {
-    estimatedStatusLength = 20; // "↑ Action required"
+    estimatedStatusLength = 20;
   }
 
   const isInteractiveShellWaiting = uiState.currentLoadingPhrase?.includes(
     INTERACTIVE_SHELL_WAITING_PHRASE,
   );
 
+  /**
+   * Determine the ambient text (tip or witty phrase) to display.
+   * Prioritize tips over witty phrases if they fit within the remaining width.
+   */
   const ambientText = (() => {
     if (isInteractiveShellWaiting) return undefined;
 
@@ -288,7 +297,7 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
   const estimatedAmbientLength = ambientText?.length || 0;
   const willCollideAmbient =
     estimatedStatusLength + estimatedAmbientLength + 5 > terminalWidth;
-  const willCollideShortcuts = estimatedStatusLength + 45 > terminalWidth; // Assume worst-case shortcut hint is 45 chars
+  const willCollideShortcuts = estimatedStatusLength + 45 > terminalWidth;
 
   const showAmbientLine =
     showUiDetails &&
@@ -301,10 +310,10 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
     !isNarrow;
 
   const renderAmbientNode = () => {
-    if (isNarrow) return null; // Status should wrap and tips/wit disappear on narrow windows
+    if (isNarrow) return null;
 
     if (!showAmbientLine) {
-      if (willCollideShortcuts) return null; // If even the shortcut hint would collide, hide completely so Status takes absolute precedent
+      if (willCollideShortcuts) return null;
       return (
         <Box
           flexDirection="row"
@@ -337,7 +346,6 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
   };
 
   const renderStatusNode = () => {
-    // In experimental layout, hooks take priority
     if (isExperimentalLayout && hasUserHooks) {
       const activeHook = userHooks[0];
       const hookIcon = activeHook?.eventName?.startsWith('After') ? '↩' : '↪';
@@ -390,7 +398,56 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
   };
 
   const statusNode = renderStatusNode();
-  // const hasStatusMessage = Boolean(statusNode) || hasToast;
+
+  /**
+   * Renders the minimal metadata row content shown when UI details are hidden.
+   */
+  const renderMinimalMetaRowContent = () => (
+    <Box flexDirection="row">
+      {showMinimalInlineLoading && (
+        <LoadingIndicator
+          inline
+          loadingPhrases={loadingPhrases}
+          errorVerbosity={settings.merged.ui.errorVerbosity}
+          elapsedTime={uiState.elapsedTime}
+          forceRealStatusOnly={true}
+          showCancelAndTimer={false}
+        />
+      )}
+      {hasUserHooks && (
+        <Box marginLeft={showMinimalInlineLoading ? 1 : 0}>
+          <Box marginRight={1}>
+            <GeminiRespondingSpinner isHookActive={true} />
+          </Box>
+          <Text color={theme.text.primary} italic>
+            <HookStatusDisplay activeHooks={userHooks} />
+          </Text>
+        </Box>
+      )}
+      {showMinimalBleedThroughRow && (
+        <Box marginLeft={showMinimalInlineLoading || hasUserHooks ? 1 : 0}>
+          {showMinimalModeBleedThrough && minimalModeBleedThrough && (
+            <Text color={minimalModeBleedThrough.color}>
+              ● {minimalModeBleedThrough.text}
+            </Text>
+          )}
+          {hasMinimalStatusBleedThrough && (
+            <Box
+              marginLeft={
+                showMinimalInlineLoading ||
+                showMinimalModeBleedThrough ||
+                hasUserHooks
+                  ? 1
+                  : 0
+              }
+            >
+              <ToastDisplay />
+            </Box>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
 
   const renderExperimentalStatusNode = () => {
     if (!showUiDetails && !showMinimalMetaRow) return null;
@@ -416,58 +473,9 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
             alignItems="center"
             justifyContent="space-between"
           >
-            {/* Left side: Toasts, Hooks, Thinking, Wit */}
             <Box flexDirection="row" flexGrow={1} flexShrink={1}>
               {!showUiDetails && showMinimalMetaRow ? (
-                <Box flexDirection="row">
-                  {showMinimalInlineLoading && (
-                    <LoadingIndicator
-                      inline
-                      loadingPhrases={loadingPhrases}
-                      errorVerbosity={settings.merged.ui.errorVerbosity}
-                      elapsedTime={uiState.elapsedTime}
-                      forceRealStatusOnly={true}
-                      showCancelAndTimer={false}
-                    />
-                  )}
-                  {hasUserHooks && (
-                    <Box marginLeft={showMinimalInlineLoading ? 1 : 0}>
-                      <Box marginRight={1}>
-                        <GeminiRespondingSpinner isHookActive={true} />
-                      </Box>
-                      <Text color={theme.text.primary} italic>
-                        <HookStatusDisplay activeHooks={userHooks} />
-                      </Text>
-                    </Box>
-                  )}
-                  {showMinimalBleedThroughRow && (
-                    <Box
-                      marginLeft={
-                        showMinimalInlineLoading || hasUserHooks ? 1 : 0
-                      }
-                    >
-                      {showMinimalModeBleedThrough &&
-                        minimalModeBleedThrough && (
-                          <Text color={minimalModeBleedThrough.color}>
-                            ● {minimalModeBleedThrough.text}
-                          </Text>
-                        )}
-                      {hasMinimalStatusBleedThrough && (
-                        <Box
-                          marginLeft={
-                            showMinimalInlineLoading ||
-                            showMinimalModeBleedThrough ||
-                            hasUserHooks
-                              ? 1
-                              : 0
-                          }
-                        >
-                          <ToastDisplay />
-                        </Box>
-                      )}
-                    </Box>
-                  )}
-                </Box>
+                renderMinimalMetaRowContent()
               ) : (
                 <Box flexDirection="row" flexGrow={1} flexShrink={1}>
                   {hasToast ? (
@@ -496,7 +504,6 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
               )}
             </Box>
 
-            {/* Right side: Tips or Shortcut Hint */}
             <Box flexShrink={0} marginLeft={2}>
               {!showUiDetails && showShortcutsHint ? (
                 <ShortcutsHint />
@@ -614,9 +621,17 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
                 {showUiDetails && showLoadingIndicator && (
                   <LoadingIndicator
                     inline
-                    loadingPhrases={loadingPhrases}
-                    errorVerbosity={settings.merged.ui.errorVerbosity}
-                    thought={uiState.thought}
+                    thought={
+                      uiState.streamingState ===
+                      StreamingState.WaitingForConfirmation
+                        ? undefined
+                        : uiState.thought
+                    }
+                    currentLoadingPhrase={
+                      settings.merged.ui.loadingPhrases === 'off'
+                        ? undefined
+                        : uiState.currentLoadingPhrase
+                    }
                     thoughtLabel={
                       inlineThinkingMode === 'full' ? 'Thinking ...' : undefined
                     }
@@ -650,53 +665,7 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
                   alignItems={isNarrow ? 'flex-start' : 'center'}
                   flexGrow={1}
                 >
-                  {showMinimalInlineLoading && (
-                    <LoadingIndicator
-                      inline
-                      loadingPhrases={loadingPhrases}
-                      errorVerbosity={settings.merged.ui.errorVerbosity}
-                      elapsedTime={uiState.elapsedTime}
-                      forceRealStatusOnly={true}
-                      showCancelAndTimer={false}
-                    />
-                  )}
-                  {hasUserHooks && (
-                    <Box marginLeft={showMinimalInlineLoading ? 1 : 0}>
-                      <Box marginRight={1}>
-                        <GeminiRespondingSpinner isHookActive={true} />
-                      </Box>
-                      <Text color={theme.text.primary} italic>
-                        <HookStatusDisplay activeHooks={userHooks} />
-                      </Text>
-                    </Box>
-                  )}
-                  {showMinimalBleedThroughRow && (
-                    <Box
-                      marginLeft={
-                        showMinimalInlineLoading || hasUserHooks ? 1 : 0
-                      }
-                    >
-                      {showMinimalModeBleedThrough &&
-                        minimalModeBleedThrough && (
-                          <Text color={minimalModeBleedThrough.color}>
-                            ● {minimalModeBleedThrough.text}
-                          </Text>
-                        )}
-                      {hasMinimalStatusBleedThrough && (
-                        <Box
-                          marginLeft={
-                            showMinimalInlineLoading ||
-                            showMinimalModeBleedThrough ||
-                            hasUserHooks
-                              ? 1
-                              : 0
-                          }
-                        >
-                          <ToastDisplay />
-                        </Box>
-                      )}
-                    </Box>
-                  )}
+                  {renderMinimalMetaRowContent()}
                 </Box>
                 {(showMinimalContextBleedThrough || showShortcutsHint) && (
                   <Box
