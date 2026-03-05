@@ -10,7 +10,7 @@ import { ShellInputPrompt } from '../ShellInputPrompt.js';
 import { StickyHeader } from '../StickyHeader.js';
 import { useUIActions } from '../../contexts/UIActionsContext.js';
 import { useMouseClick } from '../../hooks/useMouseClick.js';
-import { ToolResultDisplay } from './ToolResultDisplay.js';
+import { CollapsibleToolResult } from './CollapsibleToolResult.js';
 import {
   ToolStatusIndicator,
   ToolInfo,
@@ -160,7 +160,8 @@ export const ShellToolMessage: React.FC<ShellToolMessageProps> = ({
         paddingX={1}
         flexDirection="column"
       >
-        <ToolResultDisplay
+        <CollapsibleToolResult
+          status={status}
           resultDisplay={resultDisplay}
           availableTerminalHeight={availableTerminalHeight}
           terminalWidth={terminalWidth}

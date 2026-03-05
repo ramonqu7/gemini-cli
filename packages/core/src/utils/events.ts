@@ -13,6 +13,7 @@ import type {
   TokenStorageInitializationEvent,
   KeychainAvailabilityEvent,
 } from '../telemetry/types.js';
+import type { BackgroundTask } from '../services/backgroundTaskService.js';
 import { debugLogger } from './debugLogger.js';
 
 /**
@@ -188,6 +189,7 @@ export enum CoreEvent {
   QuotaChanged = 'quota-changed',
   TelemetryKeychainAvailability = 'telemetry-keychain-availability',
   TelemetryTokenStorageType = 'telemetry-token-storage-type',
+  BackgroundTaskCompleted = 'background-task-completed',
 }
 
 /**
@@ -195,6 +197,13 @@ export enum CoreEvent {
  */
 export interface EditorSelectedPayload {
   editor?: EditorType;
+}
+
+/**
+ * Payload for the 'background-task-completed' event.
+ */
+export interface BackgroundTaskCompletedPayload {
+  task: BackgroundTask;
 }
 
 export interface CoreEvents extends ExtensionEvents {
@@ -221,6 +230,7 @@ export interface CoreEvents extends ExtensionEvents {
   [CoreEvent.SlashCommandConflicts]: [SlashCommandConflictsPayload];
   [CoreEvent.TelemetryKeychainAvailability]: [KeychainAvailabilityEvent];
   [CoreEvent.TelemetryTokenStorageType]: [TokenStorageInitializationEvent];
+  [CoreEvent.BackgroundTaskCompleted]: [BackgroundTaskCompletedPayload];
 }
 
 type EventBacklogItem = {
@@ -422,6 +432,14 @@ export class CoreEventEmitter extends EventEmitter<CoreEvents> {
 
   emitTelemetryTokenStorageType(event: TokenStorageInitializationEvent): void {
     this._emitOrQueue(CoreEvent.TelemetryTokenStorageType, event);
+  }
+
+  /**
+   * Notifies subscribers that a background task has completed or failed.
+   */
+  emitBackgroundTaskCompleted(task: BackgroundTask): void {
+    const payload: BackgroundTaskCompletedPayload = { task };
+    this._emitOrQueue(CoreEvent.BackgroundTaskCompleted, payload);
   }
 }
 

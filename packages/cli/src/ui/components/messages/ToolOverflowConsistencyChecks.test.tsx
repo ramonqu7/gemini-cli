@@ -7,10 +7,16 @@
 import { describe, it, expect } from 'vitest';
 import { ToolGroupMessage } from './ToolGroupMessage.js';
 import { renderWithProviders } from '../../../test-utils/render.js';
+import { createMockSettings } from '../../../test-utils/settings.js';
 import { StreamingState, type IndividualToolCallDisplay } from '../../types.js';
 import { OverflowProvider } from '../../contexts/OverflowContext.js';
 import { waitFor } from '../../../test-utils/async.js';
 import { CoreToolCallStatus } from '@google/gemini-cli-core';
+
+// Settings with collapseToolOutput disabled so overflow tests see full output.
+const expandedSettings = createMockSettings({
+  merged: { ui: { collapseToolOutput: false } },
+});
 
 describe('ToolOverflowConsistencyChecks: ToolGroupMessage and ToolResultDisplay synchronization', () => {
   it('should ensure explicit hasOverflow calculation is consistent with ToolResultDisplay truncation in Alternate Buffer (ASB) mode', async () => {
@@ -47,6 +53,7 @@ describe('ToolOverflowConsistencyChecks: ToolGroupMessage and ToolResultDisplay 
         />
       </OverflowProvider>,
       {
+        settings: expandedSettings,
         uiState: {
           streamingState: StreamingState.Idle,
           constrainHeight: true,
@@ -97,6 +104,7 @@ describe('ToolOverflowConsistencyChecks: ToolGroupMessage and ToolResultDisplay 
         />
       </OverflowProvider>,
       {
+        settings: expandedSettings,
         uiState: {
           streamingState: StreamingState.Idle,
           constrainHeight: true,

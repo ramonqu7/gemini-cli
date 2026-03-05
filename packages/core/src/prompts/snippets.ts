@@ -83,6 +83,8 @@ export interface PlanningWorkflowOptions {
   planModeToolsList: string;
   plansDir: string;
   approvedPlanPath?: string;
+  /** When a plan is being executed step-by-step, this contains the step prompt. */
+  stepExecutionPrompt?: string;
 }
 
 export interface AgentSkillOptions {
@@ -219,6 +221,13 @@ Use the following guidelines to optimize your search and read patterns.
 - **Explaining Changes:** After completing a code modification or file operation *do not* provide summaries unless asked.
 - **Do Not revert changes:** Do not revert changes to the codebase unless asked to do so by the user. Only revert changes made by you if they have resulted in an error or if the user has explicitly asked you to revert the changes.${mandateSkillGuidance(options.hasSkills)}
 - **Explain Before Acting:** Never call tools in silence. You MUST provide a concise, one-sentence explanation of your intent or strategy immediately before executing tool calls. This is essential for transparency, especially when confirming a request or answering a question. Silence is only acceptable for repetitive, low-level discovery operations (e.g., sequential file reads) where narration would be noisy.${mandateContinueWork(options.interactive)}
+
+## Code Editing Strategy
+When modifying existing files, ALWAYS use \`${EDIT_TOOL_NAME}\` with \`old_string\`/\`new_string\` for targeted search-and-replace. This is the DEFAULT and PREFERRED method:
+- **Targeted changes** (bug fix, adding an import, updating a function): Use \`${EDIT_TOOL_NAME}\` with the exact text to find in \`old_string\` and the replacement in \`new_string\`. Include 2-3 lines of surrounding context in \`old_string\` to ensure a unique match.
+- **Multiple edits to one file**: Make separate \`${EDIT_TOOL_NAME}\` calls for each change.
+- **New files only**: Use \`${WRITE_FILE_TOOL_NAME}\` exclusively when creating files that do not exist yet.
+- **AVOID \`${WRITE_FILE_TOOL_NAME}\` for existing files** — it overwrites the entire file, which is error-prone, produces large diffs, and wastes context. Only use it if you are replacing the vast majority of the file content.
 `.trim();
 }
 
@@ -430,7 +439,22 @@ export function renderGitRepo(options?: GitRepoOptions): string {
 - Prefer commit messages that are clear, concise, and focused more on "why" and less on "what".${gitRepoKeepUserInformed(options.interactive)}
 - After each commit, confirm that it was successful by running \`git status\`.
 - If a commit fails, never attempt to work around the issues without being asked to do so.
-- Never push changes to a remote repository without being asked explicitly by the user.`.trim();
+- Never push changes to a remote repository without being asked explicitly by the user.
+
+## Git Safety Rules
+
+The following rules are strictly enforced and cannot be overridden:
+
+- **NEVER** force-push to main or master branches.
+- **NEVER** use \`git reset --hard\` unless the user explicitly requests it — it discards all uncommitted changes.
+- **NEVER** use \`git clean -f\` without first running \`git clean -n\` to preview deletions.
+- **NEVER** skip hooks with \`--no-verify\` — fix the underlying issue instead.
+- **NEVER** use \`git branch -D\` (force delete) — use \`git branch -d\` which is safe for merged branches.
+- **NEVER** discard all changes with \`git checkout .\` or \`git restore .\` — target specific files instead.
+- **NEVER** amend commits unless explicitly asked — create new commits instead.
+- **NEVER** auto-commit — only commit when the user asks.
+- Before any destructive git operation, explain what will happen and ask for confirmation.
+- Prefer \`--force-with-lease\` over \`--force\` for non-protected branches.`.trim();
 }
 
 export function renderUserMemory(
@@ -528,7 +552,24 @@ Write the implementation plan to \`${options.plansDir}/\`. The plan's structure 
 ### 4. Review & Approval
 Use the ${formatToolName(EXIT_PLAN_MODE_TOOL_NAME)} tool to present the plan and formally request approval.
 
-${renderApprovedPlanSection(options.approvedPlanPath)}`.trim();
+${renderApprovedPlanSection(options.approvedPlanPath)}
+
+${renderStepExecutionSection(options.stepExecutionPrompt)}`.trim();
+}
+
+function renderStepExecutionSection(stepPrompt?: string): string {
+  if (!stepPrompt) return '';
+  return `## Plan Execution Mode
+
+You are executing an approved plan step-by-step. Follow these rules strictly:
+
+1. Execute ONLY the current step. Do not skip ahead or combine steps.
+2. After completing each step, report what you did and wait for approval.
+3. If a step fails, explain why and suggest alternatives. Do not proceed.
+4. You may suggest modifications to upcoming steps based on what you learn.
+
+${stepPrompt}
+`;
 }
 
 function renderApprovedPlanSection(approvedPlanPath?: string): string {

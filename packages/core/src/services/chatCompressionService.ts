@@ -239,6 +239,7 @@ export class ChatCompressionService {
     hasFailedCompressionAttempt: boolean,
     abortSignal?: AbortSignal,
     userCompactInstructions?: string,
+    stateSnapshot?: string,
   ): Promise<{ newHistory: Content[] | null; info: ChatCompressionInfo }> {
     const curatedHistory = chat.getHistory(true);
 
@@ -352,6 +353,22 @@ export class ChatCompressionService {
       ? 'A previous <state_snapshot> exists in the history. You MUST integrate all still-relevant information from that snapshot into the new one, updating it with the more recent events. Do not lose established constraints or critical knowledge.'
       : 'Generate a new <state_snapshot> based on the provided history.';
 
+    // Build the compression system instruction, optionally enriched with a
+    // structured state snapshot that gives the summariser hard facts to anchor on.
+    let compressionSystemText = getCompressionPrompt(
+      config,
+      await getEffectiveCompactInstructions(userCompactInstructions),
+    );
+
+    if (stateSnapshot) {
+      compressionSystemText +=
+        '\n\n### TRACKED SESSION STATE\n' +
+        'The following is a machine-generated snapshot of verified session state. ' +
+        'Preserve all information from this snapshot in your summary — these are ' +
+        'ground-truth facts about what happened during the session.\n\n' +
+        stateSnapshot;
+    }
+
     const summaryResponse = await config.getBaseLlmClient().generateContent({
       modelConfigKey: { model: modelStringToModelConfigAlias(model) },
       contents: [
@@ -366,10 +383,7 @@ export class ChatCompressionService {
         },
       ],
       systemInstruction: {
-        text: getCompressionPrompt(
-          config,
-          await getEffectiveCompactInstructions(userCompactInstructions),
-        ),
+        text: compressionSystemText,
       },
       promptId,
       // TODO(joshualitt): wire up a sensible abort signal,
@@ -400,10 +414,7 @@ export class ChatCompressionService {
           },
         ],
         systemInstruction: {
-          text: getCompressionPrompt(
-            config,
-            await getEffectiveCompactInstructions(userCompactInstructions),
-          ),
+          text: compressionSystemText,
         },
         promptId: `${promptId}-verify`,
         role: LlmRole.UTILITY_COMPRESSOR,

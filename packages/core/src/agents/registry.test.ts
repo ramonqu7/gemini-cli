@@ -19,6 +19,7 @@ import { A2AClientManager } from './a2a-client-manager.js';
 import {
   DEFAULT_GEMINI_FLASH_LITE_MODEL,
   DEFAULT_GEMINI_MODEL,
+  DEFAULT_GEMINI_2_FLASH_MODEL,
   DEFAULT_THINKING_MODE,
   PREVIEW_GEMINI_FLASH_MODEL,
   PREVIEW_GEMINI_MODEL,
@@ -153,7 +154,7 @@ describe('AgentRegistry', () => {
         'codebase_investigator',
       ) as LocalAgentDefinition;
       expect(investigatorDef).toBeDefined();
-      expect(investigatorDef?.modelConfig.model).toBe(DEFAULT_GEMINI_MODEL);
+      expect(investigatorDef?.modelConfig.model).toBe(DEFAULT_GEMINI_2_FLASH_MODEL);
       expect(
         investigatorDef?.modelConfig.generateContentConfig?.thinkingConfig,
       ).toStrictEqual({

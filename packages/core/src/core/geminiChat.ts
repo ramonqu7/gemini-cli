@@ -25,6 +25,7 @@ import type { Config } from '../config/config.js';
 import {
   resolveModel,
   isGemini2Model,
+  isGemini3Model,
   supportsModernFeatures,
 } from '../config/models.js';
 import { hasCycleInSchema } from '../tools/tools.js';
@@ -53,6 +54,7 @@ import {
   createAvailabilityContextProvider,
 } from '../availability/policyHelpers.js';
 import { coreEvents } from '../utils/events.js';
+import { ThinkingBudgetService } from '../services/thinkingBudgetService.js';
 
 export enum StreamEventType {
   /** A regular content chunk from the API. */
@@ -243,6 +245,7 @@ export class GeminiChat {
   private sendPromise: Promise<void> = Promise.resolve();
   private readonly chatRecordingService: ChatRecordingService;
   private lastPromptTokenCount: number;
+  private readonly thinkingBudgetService: ThinkingBudgetService;
 
   constructor(
     private readonly config: Config,
@@ -256,6 +259,7 @@ export class GeminiChat {
     validateHistory(history);
     this.chatRecordingService = new ChatRecordingService(config);
     this.chatRecordingService.initialize(resumedSessionData, kind);
+    this.thinkingBudgetService = new ThinkingBudgetService();
     this.lastPromptTokenCount = estimateTokenCountSync(
       this.history.flatMap((c) => c.parts || []),
     );
@@ -528,6 +532,26 @@ export class GeminiChat {
         abortSignal,
       };
 
+      // Apply dynamic thinking budget for models that use thinkingBudget
+      // (Gemini 2.5 family). Skip for Gemini 3 models (which use thinkingLevel)
+      // and skip if the user has disabled dynamic budgets.
+      if (
+        (this.config.isDynamicThinkingBudgetEnabled?.() ?? true) &&
+        !isGemini3Model(modelToUse) &&
+        config.thinkingConfig?.thinkingBudget !== undefined &&
+        config.thinkingConfig.thinkingBudget > 0
+      ) {
+        const userPrompt = this.extractLatestUserPrompt(requestContents);
+        if (userPrompt) {
+          const { budget } =
+            this.thinkingBudgetService.recommendBudget(userPrompt);
+          config.thinkingConfig = {
+            ...config.thinkingConfig,
+            thinkingBudget: budget,
+          };
+        }
+      }
+
       let contentsToUse = supportsModernFeatures(modelToUse)
         ? contentsForPreviewModel
         : requestContents;
@@ -790,6 +814,27 @@ export class GeminiChat {
 
   setTools(tools: Tool[]): void {
     this.tools = tools;
+  }
+
+  /**
+   * Extracts the text of the most recent user prompt from the request contents.
+   * Returns undefined if no user text content is found.
+   */
+  private extractLatestUserPrompt(contents: Content[]): string | undefined {
+    // Walk backwards to find the last user turn with text.
+    for (let i = contents.length - 1; i >= 0; i--) {
+      const content = contents[i];
+      if (content.role === 'user' && content.parts) {
+        const textParts = content.parts
+          .filter((part) => part.text && !part.functionResponse)
+          .map((part) => part.text)
+          .join(' ');
+        if (textParts.trim()) {
+          return textParts.trim();
+        }
+      }
+    }
+    return undefined;
   }
 
   async maybeIncludeSchemaDepthContext(error: StructuredError): Promise<void> {

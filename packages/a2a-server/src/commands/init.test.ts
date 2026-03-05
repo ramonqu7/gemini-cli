@@ -8,7 +8,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { InitCommand } from './init.js';
 import {
   performInit,
-  type CommandActionReturn,
   type Config,
 } from '@google/gemini-cli-core';
 import * as fs from 'node:fs';
@@ -87,10 +86,14 @@ describe('InitCommand', () => {
   describe('execute', () => {
     it('handles info from performInit', async () => {
       vi.mocked(performInit).mockReturnValue({
-        type: 'message',
-        messageType: 'info',
-        content: 'GEMINI.md already exists.',
-      } as CommandActionReturn);
+        action: {
+          type: 'message',
+          messageType: 'info',
+          content: 'GEMINI.md already exists.',
+        },
+        generatedContent: null,
+        projectInfo: null,
+      });
 
       await command.execute(context, []);
 
@@ -122,10 +125,14 @@ describe('InitCommand', () => {
 
     it('handles error from performInit', async () => {
       vi.mocked(performInit).mockReturnValue({
-        type: 'message',
-        messageType: 'error',
-        content: 'An error occurred.',
-      } as CommandActionReturn);
+        action: {
+          type: 'message',
+          messageType: 'error',
+          content: 'An error occurred.',
+        },
+        generatedContent: null,
+        projectInfo: null,
+      });
 
       await command.execute(context, []);
 
@@ -145,9 +152,13 @@ describe('InitCommand', () => {
     describe('when handling submit_prompt', () => {
       beforeEach(() => {
         vi.mocked(performInit).mockReturnValue({
-          type: 'submit_prompt',
-          content: 'Create a new GEMINI.md file.',
-        } as CommandActionReturn);
+          action: {
+            type: 'submit_prompt',
+            content: 'Create a new GEMINI.md file.',
+          },
+          generatedContent: null,
+          projectInfo: null,
+        });
       });
 
       it('writes the file and executes the agent', async () => {

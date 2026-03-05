@@ -7,9 +7,15 @@
 import { describe, it, expect } from 'vitest';
 import { ToolGroupMessage } from './ToolGroupMessage.js';
 import { renderWithProviders } from '../../../test-utils/render.js';
+import { createMockSettings } from '../../../test-utils/settings.js';
 import { StreamingState, type IndividualToolCallDisplay } from '../../types.js';
 import { waitFor } from '../../../test-utils/async.js';
 import { CoreToolCallStatus } from '@google/gemini-cli-core';
+
+// Settings with collapseToolOutput disabled so tests can assert full output.
+const expandedSettings = createMockSettings({
+  merged: { ui: { collapseToolOutput: false } },
+});
 
 describe('ToolResultDisplay Overflow', () => {
   it('should display "press ctrl-o" hint when content overflows in ToolGroupMessage', async () => {
@@ -40,6 +46,7 @@ describe('ToolResultDisplay Overflow', () => {
         isExpandable={true}
       />,
       {
+        settings: expandedSettings,
         uiState: {
           streamingState: StreamingState.Idle,
           constrainHeight: true,

@@ -73,6 +73,10 @@ import {
   ASK_USER_OPTION_PARAM_LABEL,
   ASK_USER_OPTION_PARAM_DESCRIPTION,
   PLAN_MODE_PARAM_REASON,
+  BATCH_READ_FILES_TOOL_NAME,
+  BATCH_READ_PARAM_FILE_PATHS,
+  BATCH_SHELL_COMMANDS_TOOL_NAME,
+  BATCH_SHELL_PARAM_COMMANDS,
 } from '../base-declarations.js';
 import {
   getShellDeclaration,
@@ -116,7 +120,7 @@ export const GEMINI_3_SET: CoreToolSet = {
 
   write_file: {
     name: WRITE_FILE_TOOL_NAME,
-    description: `Writes the complete content to a file, automatically creating missing parent directories. Overwrites existing files. The user has the ability to modify 'content' before it is saved. Best for new or small files; use '${EDIT_TOOL_NAME}' for targeted edits to large files.`,
+    description: `Creates a new file or completely overwrites an existing file with the provided content. Use this ONLY for creating new files. For modifying existing files, ALWAYS prefer '${EDIT_TOOL_NAME}' with old_string/new_string — it produces minimal diffs and is less error-prone. The user has the ability to modify 'content' before it is saved.`,
     parametersJsonSchema: {
       type: 'object',
       properties: {
@@ -343,7 +347,8 @@ export const GEMINI_3_SET: CoreToolSet = {
 
   replace: {
     name: EDIT_TOOL_NAME,
-    description: `Replaces text within a file. By default, the tool expects to find and replace exactly ONE occurrence of \`old_string\`. If you want to replace multiple occurrences of the exact same string, set \`allow_multiple\` to true. This tool requires providing significant context around the change to ensure precise targeting.
+    description: `The PRIMARY tool for modifying existing files. Performs a targeted search-and-replace: finds \`old_string\` in the file and replaces it with \`new_string\`. This is ALWAYS preferred over \`${WRITE_FILE_TOOL_NAME}\` for editing existing files because it produces minimal, reviewable diffs.
+By default, exactly ONE occurrence of \`old_string\` must exist. Set \`allow_multiple\` to true to replace all occurrences. Include 2-3 lines of surrounding context in \`old_string\` to ensure a unique match. For multiple changes to one file, make separate calls.
 The user has the ability to modify the \`new_string\` content. If modified, this will be stated in the response.`,
     parametersJsonSchema: {
       type: 'object',
@@ -709,4 +714,60 @@ The agent did not use the todo list because this task could be completed by a ti
 
   exit_plan_mode: (plansDir) => getExitPlanModeDeclaration(plansDir),
   activate_skill: (skillNames) => getActivateSkillDeclaration(skillNames),
+
+  batch_read_files: {
+    name: BATCH_READ_FILES_TOOL_NAME,
+    description:
+      'Reads multiple files simultaneously in a single tool call. Use this instead of making separate read_file calls when you need to read 2-10 files. All files are read in parallel for efficiency. Each file result includes the file path header and its content (or an error message if the file could not be read). Files that fail to read do not prevent other files from being read successfully.',
+    parametersJsonSchema: {
+      type: 'object',
+      properties: {
+        [BATCH_READ_PARAM_FILE_PATHS]: {
+          type: 'array',
+          items: {
+            type: 'string',
+          },
+          minItems: 1,
+          maxItems: 10,
+          description:
+            'Array of file paths to read simultaneously. Paths are resolved relative to the current working directory. Maximum 10 files per call.',
+        },
+      },
+      required: [BATCH_READ_PARAM_FILE_PATHS],
+    },
+  },
+
+  batch_shell_commands: {
+    name: BATCH_SHELL_COMMANDS_TOOL_NAME,
+    description:
+      'Executes multiple independent shell commands simultaneously in a single tool call. Use this instead of making separate run_shell_command calls when you have 2-5 commands that do not depend on each other. All commands are executed in parallel for efficiency. Each command result includes the command, its output, and exit status. Commands that fail do not prevent other commands from completing. Each command goes through the same safety checks as run_shell_command. Do NOT use this for commands that depend on each other — use run_shell_command with && chaining instead.',
+    parametersJsonSchema: {
+      type: 'object',
+      properties: {
+        [BATCH_SHELL_PARAM_COMMANDS]: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              command: {
+                type: 'string',
+                description: 'The shell command to execute.',
+              },
+              description: {
+                type: 'string',
+                description:
+                  'A brief description of what this command does.',
+              },
+            },
+            required: ['command'],
+          },
+          minItems: 1,
+          maxItems: 5,
+          description:
+            'Array of independent shell commands to execute simultaneously. Maximum 5 commands per call.',
+        },
+      },
+      required: [BATCH_SHELL_PARAM_COMMANDS],
+    },
+  },
 };

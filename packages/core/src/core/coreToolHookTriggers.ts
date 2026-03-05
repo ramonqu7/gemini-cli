@@ -17,6 +17,10 @@ import { debugLogger } from '../utils/debugLogger.js';
 import type { ShellExecutionConfig } from '../index.js';
 import { ShellToolInvocation } from '../tools/shell.js';
 import { DiscoveredMCPToolInvocation } from '../tools/mcp-tool.js';
+import {
+  EDIT_TOOL_NAME,
+  WRITE_FILE_TOOL_NAME,
+} from '../tools/tool-names.js';
 
 /**
  * Extracts MCP context from a tool invocation if it's an MCP tool.
@@ -169,6 +173,18 @@ export async function executeToolWithHooks(
       liveOutputCallback,
       shellExecutionConfig,
     );
+  }
+
+  // Track file modifications for the state snapshot (used during compression).
+  if (
+    config &&
+    !toolResult.error &&
+    (toolName === WRITE_FILE_TOOL_NAME || toolName === EDIT_TOOL_NAME)
+  ) {
+    const filePath = toolInput['file_path'];
+    if (typeof filePath === 'string') {
+      config.getStateSnapshotService().recordFileModification(filePath);
+    }
   }
 
   // Append notification if parameters were modified

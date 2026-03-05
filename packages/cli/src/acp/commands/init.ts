@@ -28,18 +28,22 @@ export class InitCommand implements Command {
     }
 
     const geminiMdPath = path.join(targetDir, 'GEMINI.md');
-    const result = performInit(fs.existsSync(geminiMdPath));
+    const { action, generatedContent } = performInit(
+      fs.existsSync(geminiMdPath),
+      targetDir,
+    );
 
-    switch (result.type) {
+    switch (action.type) {
       case 'message':
         return {
           name: this.name,
-          data: result,
+          data: action,
         };
-      case 'submit_prompt':
-        fs.writeFileSync(geminiMdPath, '', 'utf8');
+      case 'submit_prompt': {
+        const initialContent = generatedContent ?? '';
+        fs.writeFileSync(geminiMdPath, initialContent, 'utf8');
 
-        if (typeof result.content !== 'string') {
+        if (typeof action.content !== 'string') {
           throw new Error('Init command content must be a string.');
         }
 
@@ -51,9 +55,10 @@ export class InitCommand implements Command {
           data: {
             type: 'message',
             messageType: 'info',
-            content: `A template GEMINI.md has been created at ${geminiMdPath}.\n\nTo populate it with project context, you can run the following prompt in a new chat:\n\n${result.content}`,
+            content: `A template GEMINI.md has been created at ${geminiMdPath}.\n\nTo populate it with project context, you can run the following prompt in a new chat:\n\n${action.content}`,
           },
         };
+      }
 
       default:
         throw new Error('Unknown result type from performInit');

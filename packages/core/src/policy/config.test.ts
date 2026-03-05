@@ -1196,4 +1196,137 @@ modes = ["plan"]
 
     vi.doUnmock('node:fs/promises');
   });
+
+  it('should convert tool permission rules into PolicyRules', async () => {
+    const {
+      createPolicyEngineConfig,
+      TOOL_PERMISSION_DENY_PRIORITY,
+      TOOL_PERMISSION_ALLOW_PRIORITY,
+    } = await import('./config.js');
+
+    const settings: PolicySettings = {
+      tools: {
+        permissions: [
+          {
+            tool: 'run_shell_command',
+            allow: ['^npm (test|run build)'],
+            deny: ['^rm -rf', '^sudo'],
+          },
+          {
+            tool: 'replace',
+            allow: ['^src/'],
+            deny: ['node_modules/'],
+          },
+        ],
+      },
+    };
+
+    const config = await createPolicyEngineConfig(
+      settings,
+      ApprovalMode.DEFAULT,
+      '/non/existent/policies',
+    );
+
+    // Should have deny rules for shell
+    const shellDenyRules = config.rules?.filter(
+      (r) =>
+        r.toolName === 'run_shell_command' &&
+        r.decision === PolicyDecision.DENY &&
+        r.source === 'Settings (Tool Permissions)',
+    );
+    expect(shellDenyRules?.length).toBe(2);
+    expect(shellDenyRules?.[0].priority).toBe(TOOL_PERMISSION_DENY_PRIORITY);
+
+    // Should have allow rules for shell
+    const shellAllowRules = config.rules?.filter(
+      (r) =>
+        r.toolName === 'run_shell_command' &&
+        r.decision === PolicyDecision.ALLOW &&
+        r.source === 'Settings (Tool Permissions)',
+    );
+    expect(shellAllowRules?.length).toBe(1);
+    expect(shellAllowRules?.[0].priority).toBe(TOOL_PERMISSION_ALLOW_PRIORITY);
+
+    // Should have deny rules for edit
+    const editDenyRules = config.rules?.filter(
+      (r) =>
+        r.toolName === 'replace' &&
+        r.decision === PolicyDecision.DENY &&
+        r.source === 'Settings (Tool Permissions)',
+    );
+    expect(editDenyRules?.length).toBe(1);
+
+    // Should have allow rules for edit
+    const editAllowRules = config.rules?.filter(
+      (r) =>
+        r.toolName === 'replace' &&
+        r.decision === PolicyDecision.ALLOW &&
+        r.source === 'Settings (Tool Permissions)',
+    );
+    expect(editAllowRules?.length).toBe(1);
+
+    vi.doUnmock('node:fs/promises');
+  });
+
+  it('should skip invalid regex patterns in tool permissions', async () => {
+    const { createPolicyEngineConfig } = await import('./config.js');
+
+    const settings: PolicySettings = {
+      tools: {
+        permissions: [
+          {
+            tool: 'run_shell_command',
+            allow: ['[invalid-regex'],
+            deny: ['^valid-pattern'],
+          },
+        ],
+      },
+    };
+
+    const config = await createPolicyEngineConfig(
+      settings,
+      ApprovalMode.DEFAULT,
+      '/non/existent/policies',
+    );
+
+    // Should only have the deny rule (allow had invalid regex)
+    const permissionRules = config.rules?.filter(
+      (r) => r.source === 'Settings (Tool Permissions)',
+    );
+    expect(permissionRules?.length).toBe(1);
+    expect(permissionRules?.[0].decision).toBe(PolicyDecision.DENY);
+
+    vi.doUnmock('node:fs/promises');
+  });
+
+  it('should handle wildcard tool permissions', async () => {
+    const { createPolicyEngineConfig } = await import('./config.js');
+
+    const settings: PolicySettings = {
+      tools: {
+        permissions: [
+          {
+            tool: '*',
+            deny: ['password', 'secret'],
+          },
+        ],
+      },
+    };
+
+    const config = await createPolicyEngineConfig(
+      settings,
+      ApprovalMode.DEFAULT,
+      '/non/existent/policies',
+    );
+
+    const wildcardRules = config.rules?.filter(
+      (r) =>
+        r.toolName === '*' &&
+        r.decision === PolicyDecision.DENY &&
+        r.source === 'Settings (Tool Permissions)',
+    );
+    expect(wildcardRules?.length).toBe(2);
+
+    vi.doUnmock('node:fs/promises');
+  });
 });

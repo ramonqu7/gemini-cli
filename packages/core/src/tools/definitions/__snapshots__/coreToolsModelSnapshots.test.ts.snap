@@ -503,14 +503,14 @@ Use this tool when the user's query implies needing the content of several files
 
 exports[`coreTools snapshots for specific models > Model: gemini-2.5-pro > snapshot for tool: replace 1`] = `
 {
-  "description": "Replaces text within a file. By default, the tool expects to find and replace exactly ONE occurrence of \`old_string\`. If you want to replace multiple occurrences of the exact same string, set \`allow_multiple\` to true. This tool requires providing significant context around the change to ensure precise targeting. Always use the read_file tool to examine the file's current content before attempting a text replacement.
-      
+  "description": "The PRIMARY tool for modifying existing files. Performs a targeted search-and-replace: finds \`old_string\` in the file and replaces it with \`new_string\`. This is ALWAYS preferred over \`write_file\` for editing existing files because it produces minimal, reviewable diffs. Always use the read_file tool to examine the file's current content before attempting a replacement.
+
       The user has the ability to modify the \`new_string\` content. If modified, this will be stated in the response.
-      
+
       Expectation for required parameters:
       1. \`old_string\` MUST be the exact literal text to replace (including all whitespace, indentation, newlines, and surrounding code etc.).
       2. \`new_string\` MUST be the exact literal text to replace \`old_string\` with (also including all whitespace, indentation, newlines, and surrounding code etc.). Ensure the resulting code is correct and idiomatic and that \`old_string\` and \`new_string\` are different.
-      3. \`instruction\` is the detailed instruction of what needs to be changed. It is important to Make it specific and detailed so developers or large language models can understand what needs to be changed and perform the changes on their own if necessary. 
+      3. \`instruction\` is the detailed instruction of what needs to be changed. It is important to Make it specific and detailed so developers or large language models can understand what needs to be changed and perform the changes on their own if necessary.
       4. NEVER escape \`old_string\` or \`new_string\`, that would break the exact literal text requirement.
       **Important:** If ANY of the above are not satisfied, the tool will fail. CRITICAL for \`old_string\`: Must uniquely identify the instance(s) to change. Include at least 3 lines of context BEFORE and AFTER the target text, matching whitespace and indentation precisely. If this string matches multiple locations and \`allow_multiple\` is not true, the tool will fail.
       5. Prefer to break down complex and long changes into multiple smaller atomic calls to this tool. Always check the content of the file after changes or not finding a string to match.
@@ -656,7 +656,7 @@ exports[`coreTools snapshots for specific models > Model: gemini-2.5-pro > snaps
 
 exports[`coreTools snapshots for specific models > Model: gemini-2.5-pro > snapshot for tool: write_file 1`] = `
 {
-  "description": "Writes content to a specified file in the local filesystem.
+  "description": "Creates a new file or completely overwrites an existing file. Use this ONLY for creating new files. For modifying existing files, ALWAYS prefer 'replace' with old_string/new_string — it produces minimal diffs and is less error-prone.
 
       The user has the ability to modify \`content\`. If modified, this will be stated in the response.",
   "name": "write_file",
@@ -1290,7 +1290,8 @@ Use this tool when the user's query implies needing the content of several files
 
 exports[`coreTools snapshots for specific models > Model: gemini-3-pro-preview > snapshot for tool: replace 1`] = `
 {
-  "description": "Replaces text within a file. By default, the tool expects to find and replace exactly ONE occurrence of \`old_string\`. If you want to replace multiple occurrences of the exact same string, set \`allow_multiple\` to true. This tool requires providing significant context around the change to ensure precise targeting.
+  "description": "The PRIMARY tool for modifying existing files. Performs a targeted search-and-replace: finds \`old_string\` in the file and replaces it with \`new_string\`. This is ALWAYS preferred over \`write_file\` for editing existing files because it produces minimal, reviewable diffs.
+By default, exactly ONE occurrence of \`old_string\` must exist. Set \`allow_multiple\` to true to replace all occurrences. Include 2-3 lines of surrounding context in \`old_string\` to ensure a unique match. For multiple changes to one file, make separate calls.
 The user has the ability to modify the \`new_string\` content. If modified, this will be stated in the response.",
   "name": "replace",
   "parametersJsonSchema": {
@@ -1412,7 +1413,7 @@ exports[`coreTools snapshots for specific models > Model: gemini-3-pro-preview >
 
 exports[`coreTools snapshots for specific models > Model: gemini-3-pro-preview > snapshot for tool: write_file 1`] = `
 {
-  "description": "Writes the complete content to a file, automatically creating missing parent directories. Overwrites existing files. The user has the ability to modify 'content' before it is saved. Best for new or small files; use 'replace' for targeted edits to large files.",
+  "description": "Creates a new file or completely overwrites an existing file with the provided content. Use this ONLY for creating new files. For modifying existing files, ALWAYS prefer 'replace' with old_string/new_string — it produces minimal diffs and is less error-prone. The user has the ability to modify 'content' before it is saved.",
   "name": "write_file",
   "parametersJsonSchema": {
     "properties": {

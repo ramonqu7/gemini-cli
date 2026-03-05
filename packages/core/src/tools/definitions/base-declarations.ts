@@ -97,6 +97,14 @@ export const MEMORY_PARAM_FACT = 'fact';
 export const GET_INTERNAL_DOCS_TOOL_NAME = 'get_internal_docs';
 export const DOCS_PARAM_PATH = 'path';
 
+// -- batch_read_files --
+export const BATCH_READ_FILES_TOOL_NAME = 'batch_read_files';
+export const BATCH_READ_PARAM_FILE_PATHS = 'file_paths';
+
+// -- batch_shell_commands --
+export const BATCH_SHELL_COMMANDS_TOOL_NAME = 'batch_shell_commands';
+export const BATCH_SHELL_PARAM_COMMANDS = 'commands';
+
 // -- activate_skill --
 export const ACTIVATE_SKILL_TOOL_NAME = 'activate_skill';
 export const SKILL_PARAM_NAME = 'name';

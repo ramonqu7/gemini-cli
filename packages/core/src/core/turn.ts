@@ -34,6 +34,7 @@ import {
   type ToolCallRequestInfo,
   type ToolCallResponseInfo,
 } from '../scheduler/types.js';
+import type { StreamingToolPipelineService } from '../services/streamingToolPipelineService.js';
 
 export interface ServerTool {
   name: string;
@@ -247,6 +248,8 @@ export class Turn {
   constructor(
     private readonly chat: GeminiChat,
     private readonly prompt_id: string,
+    private readonly streamingPipeline?: StreamingToolPipelineService,
+    private readonly pipelineSignal?: AbortSignal,
   ) {}
 
   // The run method yields simpler events suitable for server logic
@@ -422,8 +425,26 @@ export class Turn {
 
     this.pendingToolCalls.push(toolCallRequest);
 
+    // If a streaming pipeline is available, queue read-only tools for
+    // speculative early execution while the model continues streaming.
+    if (this.streamingPipeline && this.pipelineSignal) {
+      this.streamingPipeline.queueForExecution(
+        toolCallRequest,
+        this.pipelineSignal,
+      );
+    }
+
     // Yield a request for the tool call, not the pending/confirming status
     return { type: GeminiEventType.ToolCallRequest, value: toolCallRequest };
+  }
+
+  /**
+   * Returns the streaming tool pipeline service, if one was provided.
+   * Callers (e.g., the scheduler) can use this to check for pre-computed
+   * results from tools that were speculatively executed during streaming.
+   */
+  getStreamingPipeline(): StreamingToolPipelineService | undefined {
+    return this.streamingPipeline;
   }
 
   getDebugResponses(): GenerateContentResponse[] {

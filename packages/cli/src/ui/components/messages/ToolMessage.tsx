@@ -8,7 +8,7 @@ import type React from 'react';
 import { Box } from 'ink';
 import type { IndividualToolCallDisplay } from '../../types.js';
 import { StickyHeader } from '../StickyHeader.js';
-import { ToolResultDisplay } from './ToolResultDisplay.js';
+import { CollapsibleToolResult } from './CollapsibleToolResult.js';
 import {
   ToolStatusIndicator,
   ToolInfo,
@@ -126,7 +126,8 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
             barWidth={20}
           />
         )}
-        <ToolResultDisplay
+        <CollapsibleToolResult
+          status={status}
           resultDisplay={resultDisplay}
           availableTerminalHeight={availableTerminalHeight}
           terminalWidth={terminalWidth}

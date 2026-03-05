@@ -16,10 +16,11 @@ import {
   type PolicyRule,
   type PolicySettings,
   type SafetyCheckerRule,
+  type ToolPermissionRuleConfig,
 } from './types.js';
 import type { PolicyEngine } from './policy-engine.js';
 import { loadPoliciesFromToml, type PolicyFileError } from './toml-loader.js';
-import { buildArgsPatterns, isSafeRegExp } from './utils.js';
+import { buildArgsPatterns, escapeRegex, isSafeRegExp } from './utils.js';
 import toml from '@iarna/toml';
 import {
   MessageBusType,
@@ -54,7 +55,11 @@ export const ADMIN_POLICY_TIER = 5;
 export const ALWAYS_ALLOW_PRIORITY = WORKSPACE_POLICY_TIER + 0.95;
 
 export const MCP_EXCLUDED_PRIORITY = USER_POLICY_TIER + 0.9;
+// Deny permissions are high-priority (even above YOLO) to act as a safety net.
+export const TOOL_PERMISSION_DENY_PRIORITY = USER_POLICY_TIER + 0.8;
 export const EXCLUDE_TOOLS_FLAG_PRIORITY = USER_POLICY_TIER + 0.4;
+// Allow permissions sit between exclude and allowed flags in priority.
+export const TOOL_PERMISSION_ALLOW_PRIORITY = USER_POLICY_TIER + 0.35;
 export const ALLOWED_TOOLS_FLAG_PRIORITY = USER_POLICY_TIER + 0.3;
 export const TRUSTED_MCP_SERVER_PRIORITY = USER_POLICY_TIER + 0.2;
 export const ALLOWED_MCP_SERVER_PRIORITY = USER_POLICY_TIER + 0.1;
@@ -447,12 +452,166 @@ export async function createPolicyEngineConfig(
     }
   }
 
+  // Tool permission rules with regex pattern matching
+  // Priority: TOOL_PERMISSION_DENY_PRIORITY for deny rules (overrides even YOLO)
+  //           TOOL_PERMISSION_ALLOW_PRIORITY for allow rules
+  if (settings.tools?.permissions) {
+    const permissionRules = convertToolPermissionsToRules(
+      settings.tools.permissions,
+    );
+    rules.push(...permissionRules);
+  }
+
   return {
     rules,
     checkers,
     defaultDecision: PolicyDecision.ASK_USER,
     approvalMode,
   };
+}
+
+/**
+ * Mapping of tool names to their primary matchable argument key.
+ * Used by convertToolPermissionsToRules to build argsPattern regexes
+ * that match against JSON-stringified tool arguments.
+ */
+const PERMISSION_TOOL_ARG_KEYS: Record<string, string> = {
+  run_shell_command: 'command',
+  ShellTool: 'command',
+  replace: 'file_path',
+  write_file: 'file_path',
+  read_file: 'file_path',
+  glob: 'pattern',
+};
+
+/**
+ * Converts user-friendly tool permission rules into PolicyRule objects.
+ *
+ * Each permission rule can have allow and deny patterns. These are converted into
+ * PolicyRule objects with appropriate argsPattern regex that matches against the
+ * JSON-stringified tool arguments.
+ *
+ * Deny rules get higher priority (TOOL_PERMISSION_DENY_PRIORITY) than allow rules
+ * (TOOL_PERMISSION_ALLOW_PRIORITY) to ensure deny always wins.
+ *
+ * Invalid or unsafe regex patterns are skipped with a warning.
+ */
+export function convertToolPermissionsToRules(
+  permissions: ToolPermissionRuleConfig[],
+): PolicyRule[] {
+  const rules: PolicyRule[] = [];
+
+  for (const permission of permissions) {
+    const toolName =
+      permission.tool === '*' ? undefined : normalizeToolName(permission.tool);
+
+    // Determine the argument key for pattern matching
+    const argKey = toolName
+      ? PERMISSION_TOOL_ARG_KEYS[toolName] ?? 'command'
+      : undefined;
+
+    // Process deny patterns (higher priority)
+    if (permission.deny) {
+      for (const pattern of permission.deny) {
+        if (!isSafeRegExp(pattern)) {
+          debugLogger.warn(
+            `[PolicyConfig] Skipping unsafe/invalid deny pattern for tool "${permission.tool}": ${pattern}`,
+          );
+          continue;
+        }
+
+        const argsPattern = argKey
+          ? buildPermissionArgsPattern(argKey, pattern)
+          : buildWildcardArgsPattern(pattern);
+
+        if (argsPattern) {
+          rules.push({
+            toolName: toolName ?? '*',
+            decision: PolicyDecision.DENY,
+            priority: TOOL_PERMISSION_DENY_PRIORITY,
+            argsPattern: new RegExp(argsPattern),
+            source: 'Settings (Tool Permissions)',
+            denyMessage: `Blocked by tool permission deny rule: ${pattern}`,
+          });
+        }
+      }
+    }
+
+    // Process allow patterns (lower priority)
+    if (permission.allow) {
+      for (const pattern of permission.allow) {
+        if (!isSafeRegExp(pattern)) {
+          debugLogger.warn(
+            `[PolicyConfig] Skipping unsafe/invalid allow pattern for tool "${permission.tool}": ${pattern}`,
+          );
+          continue;
+        }
+
+        const argsPattern = argKey
+          ? buildPermissionArgsPattern(argKey, pattern)
+          : buildWildcardArgsPattern(pattern);
+
+        if (argsPattern) {
+          rules.push({
+            toolName: toolName ?? '*',
+            decision: PolicyDecision.ALLOW,
+            priority: TOOL_PERMISSION_ALLOW_PRIORITY,
+            argsPattern: new RegExp(argsPattern),
+            source: 'Settings (Tool Permissions)',
+          });
+        }
+      }
+    }
+  }
+
+  return rules;
+}
+
+/**
+ * Normalizes a tool name, converting shell tool aliases to the canonical name.
+ */
+function normalizeToolName(toolName: string): string {
+  if (SHELL_TOOL_NAMES.includes(toolName)) {
+    return SHELL_TOOL_NAME;
+  }
+  return toolName;
+}
+
+/**
+ * Builds an argsPattern regex string that matches a specific argument key's
+ * value against a user-provided pattern. The pattern matches against the
+ * JSON-stringified arguments.
+ *
+ * For example, for argKey='command' and pattern='^npm test':
+ * Result: "command":"(?:^npm test)"
+ *
+ * This ensures the regex only matches the relevant argument value.
+ */
+function buildPermissionArgsPattern(
+  argKey: string,
+  pattern: string,
+): string | null {
+  try {
+    // Validate the pattern compiles
+    new RegExp(pattern);
+    // Embed in a JSON-aware pattern that targets the specific arg key
+    return `"${escapeRegex(argKey)}":"(?:${pattern})`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Builds a wildcard argsPattern that matches a pattern against any argument value.
+ * Used when the tool is '*' (all tools).
+ */
+function buildWildcardArgsPattern(pattern: string): string | null {
+  try {
+    new RegExp(pattern);
+    return pattern;
+  } catch {
+    return null;
+  }
 }
 
 interface TomlRule {

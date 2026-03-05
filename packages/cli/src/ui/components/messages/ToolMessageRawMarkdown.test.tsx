@@ -10,7 +10,12 @@ import { ToolMessage } from './ToolMessage.js';
 import { StreamingState } from '../../types.js';
 import { StreamingContext } from '../../contexts/StreamingContext.js';
 import { renderWithProviders } from '../../../test-utils/render.js';
+import { createMockSettings } from '../../../test-utils/settings.js';
 import { CoreToolCallStatus } from '@google/gemini-cli-core';
+
+const expandedSettings = createMockSettings({
+  merged: { ui: { collapseToolOutput: false } },
+});
 
 describe('<ToolMessage /> - Raw Markdown Display Snapshots', () => {
   const baseProps: ToolMessageProps = {
@@ -72,6 +77,7 @@ describe('<ToolMessage /> - Raw Markdown Display Snapshots', () => {
           />
         </StreamingContext.Provider>,
         {
+          settings: expandedSettings,
           uiState: { renderMarkdown, streamingState: StreamingState.Idle },
           useAlternateBuffer,
         },

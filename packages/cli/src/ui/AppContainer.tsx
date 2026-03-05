@@ -79,6 +79,7 @@ import {
   generateSummary,
   type ConsentRequestPayload,
   type AgentsDiscoveredPayload,
+  type BackgroundTaskCompletedPayload,
   ChangeAuthRequestedError,
   ProjectIdRequiredError,
   CoreToolCallStatus,
@@ -1966,12 +1967,65 @@ Logging in with Google... Restarting Gemini CLI to continue.
 
     coreEvents.on(CoreEvent.UserFeedback, handleUserFeedback);
 
+    // Listen for background task completions and display notifications.
+    const handleBackgroundTaskCompleted = (
+      payload: BackgroundTaskCompletedPayload,
+    ) => {
+      const { task } = payload;
+      const duration = task.endTime
+        ? `${Math.floor((task.endTime - task.startTime) / 1000)}s`
+        : 'unknown';
+
+      if (task.status === 'completed') {
+        const resultPreview = task.result
+          ? task.result.length > 200
+            ? task.result.substring(0, 197) + '...'
+            : task.result
+          : 'No result details.';
+        historyManager.addItem(
+          {
+            type: MessageType.INFO,
+            text: [
+              `--- Background task completed (${duration}) ---`,
+              `Task: "${task.description}"`,
+              `Result: ${resultPreview}`,
+              `Use /bg results ${task.id} to see full details`,
+              '---'.repeat(14),
+            ].join('\n'),
+          },
+          Date.now(),
+        );
+      } else if (task.status === 'failed') {
+        historyManager.addItem(
+          {
+            type: MessageType.ERROR,
+            text: [
+              `--- Background task failed (${duration}) ---`,
+              `Task: "${task.description}"`,
+              `Error: ${task.error || 'Unknown error'}`,
+              '---'.repeat(14),
+            ].join('\n'),
+          },
+          Date.now(),
+        );
+      }
+    };
+
+    coreEvents.on(
+      CoreEvent.BackgroundTaskCompleted,
+      handleBackgroundTaskCompleted,
+    );
+
     // Flush any messages that happened during startup before this component
     // mounted.
     coreEvents.drainBacklogs();
 
     return () => {
       coreEvents.off(CoreEvent.UserFeedback, handleUserFeedback);
+      coreEvents.off(
+        CoreEvent.BackgroundTaskCompleted,
+        handleBackgroundTaskCompleted,
+      );
     };
   }, [historyManager]);
 

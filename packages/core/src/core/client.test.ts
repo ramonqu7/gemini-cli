@@ -3011,10 +3011,10 @@ ${JSON.stringify(
         // sendMessageStream should be called twice (original + recovery)
         expect(sendMessageStreamSpy).toHaveBeenCalledTimes(2);
 
-        // Verify recovery call parameters
+        // Verify recovery call parameters — now uses LoopRecoveryService messages
         const recoveryCall = sendMessageStreamSpy.mock.calls[1];
         expect((recoveryCall[0] as Part[])[0].text).toContain(
-          'System: Potential loop detected',
+          'System: Loop recovery (attempt 1/3)',
         );
         expect((recoveryCall[0] as Part[])[0].text).toContain(
           'Repetitive tool call',
@@ -3024,17 +3024,23 @@ ${JSON.stringify(
         expect(client['loopDetector'].clearDetection).toHaveBeenCalled();
       });
 
-      it('should terminate (Strike 2) after recovery fails', async () => {
+      it('should terminate after max recovery attempts exhausted', async () => {
         // Arrange
         vi.spyOn(client['loopDetector'], 'turnStarted').mockResolvedValue({
           count: 0,
         });
 
-        // First call triggers Strike 1, Second call triggers Strike 2
+        // Each recovery turn detects a loop again via addAndCheck.
+        // Recovery attempts: 1, 2, 3, then the 4th detection triggers abort.
         vi.spyOn(client['loopDetector'], 'addAndCheck')
           .mockReturnValueOnce({ count: 0 })
-          .mockReturnValueOnce({ count: 1, detail: 'Strike 1' }) // Triggers recovery in turn 1
-          .mockReturnValueOnce({ count: 2, detail: 'Strike 2' }); // Triggers termination in turn 2 (recovery turn)
+          .mockReturnValueOnce({ count: 1, detail: 'Strike 1' }) // Recovery attempt 1
+          .mockReturnValueOnce({ count: 0 })
+          .mockReturnValueOnce({ count: 1, detail: 'Strike 2' }) // Recovery attempt 2
+          .mockReturnValueOnce({ count: 0 })
+          .mockReturnValueOnce({ count: 1, detail: 'Strike 3' }) // Recovery attempt 3
+          .mockReturnValueOnce({ count: 0 })
+          .mockReturnValueOnce({ count: 1, detail: 'Strike 4' }); // Triggers abort (max 3 attempts exhausted)
 
         const sendMessageStreamSpy = vi.spyOn(client, 'sendMessageStream');
 
@@ -3059,7 +3065,9 @@ ${JSON.stringify(
 
         // Assert
         expect(events).toContainEqual({ type: GeminiEventType.LoopDetected });
-        expect(sendMessageStreamSpy).toHaveBeenCalledTimes(2); // One original, one recovery
+        // Original + 3 recovery attempts = 4 sendMessageStream calls
+        // (the final abort returns a generator directly without calling sendMessageStream)
+        expect(sendMessageStreamSpy).toHaveBeenCalledTimes(4);
       });
 
       it('should respect boundedTurns during recovery', async () => {
@@ -3139,25 +3147,38 @@ ${JSON.stringify(
         expect(sendMessageStreamSpy).toHaveBeenCalledTimes(2);
       });
 
-      it('should escalate Strike 2 even if loop type changes', async () => {
+      it('should abort after max recovery attempts even if loop type changes', async () => {
         // Arrange
         vi.spyOn(client['loopDetector'], 'turnStarted').mockResolvedValue({
           count: 0,
         });
 
-        // Strike 1: Tool Call Loop, Strike 2: LLM Detected Loop
+        // Different loop types across recovery attempts, then abort on 4th detection
         vi.spyOn(client['loopDetector'], 'addAndCheck')
           .mockReturnValueOnce({ count: 0 })
           .mockReturnValueOnce({
             count: 1,
             type: LoopType.TOOL_CALL_LOOP,
             detail: 'Repetitive tool',
-          })
+          }) // Recovery attempt 1
+          .mockReturnValueOnce({ count: 0 })
           .mockReturnValueOnce({
-            count: 2,
+            count: 1,
             type: LoopType.LLM_DETECTED_LOOP,
             detail: 'LLM loop',
-          });
+          }) // Recovery attempt 2
+          .mockReturnValueOnce({ count: 0 })
+          .mockReturnValueOnce({
+            count: 1,
+            type: LoopType.CONTENT_CHANTING_LOOP,
+            detail: 'Chanting',
+          }) // Recovery attempt 3
+          .mockReturnValueOnce({ count: 0 })
+          .mockReturnValueOnce({
+            count: 1,
+            type: LoopType.TOOL_CALL_LOOP,
+            detail: 'Final',
+          }); // Abort (max attempts exhausted)
 
         const sendMessageStreamSpy = vi.spyOn(client, 'sendMessageStream');
 
@@ -3182,7 +3203,9 @@ ${JSON.stringify(
 
         // Assert
         expect(events).toContainEqual({ type: GeminiEventType.LoopDetected });
-        expect(sendMessageStreamSpy).toHaveBeenCalledTimes(2);
+        // Original + 3 recovery attempts = 4 sendMessageStream calls
+        // (the final abort returns a generator directly without calling sendMessageStream)
+        expect(sendMessageStreamSpy).toHaveBeenCalledTimes(4);
       });
 
       it('should reset loop detector on new prompt', async () => {

@@ -91,6 +91,10 @@ export {
   PLAN_MODE_PARAM_REASON,
   EXIT_PLAN_PARAM_PLAN_PATH,
   SKILL_PARAM_NAME,
+  BATCH_READ_FILES_TOOL_NAME,
+  BATCH_READ_PARAM_FILE_PATHS,
+  BATCH_SHELL_COMMANDS_TOOL_NAME,
+  BATCH_SHELL_PARAM_COMMANDS,
 } from './base-declarations.js';
 
 // Re-export sets for compatibility
@@ -219,6 +223,20 @@ export const ENTER_PLAN_MODE_DEFINITION: ToolDefinition = {
     return DEFAULT_LEGACY_SET.enter_plan_mode;
   },
   overrides: (modelId) => getToolSet(modelId).enter_plan_mode,
+};
+
+export const BATCH_READ_FILES_DEFINITION: ToolDefinition = {
+  get base() {
+    return DEFAULT_LEGACY_SET.batch_read_files;
+  },
+  overrides: (modelId) => getToolSet(modelId).batch_read_files,
+};
+
+export const BATCH_SHELL_COMMANDS_DEFINITION: ToolDefinition = {
+  get base() {
+    return DEFAULT_LEGACY_SET.batch_shell_commands;
+  },
+  overrides: (modelId) => getToolSet(modelId).batch_shell_commands,
 };
 
 // ============================================================================

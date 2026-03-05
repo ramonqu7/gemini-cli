@@ -23,6 +23,7 @@ import {
   saveTruncatedToolOutput,
   formatTruncatedToolOutput,
 } from '../utils/fileUtils.js';
+import { ToolOutputFormatterService } from '../services/toolOutputFormatterService.js';
 import { convertToFunctionResponse } from '../utils/generateContentResponseUtilities.js';
 import {
   CoreToolCallStatus,
@@ -49,6 +50,7 @@ export interface ToolExecutionContext {
 }
 
 export class ToolExecutor {
+  private readonly formatter = new ToolOutputFormatterService();
   constructor(private readonly config: Config) {}
 
   async execute(context: ToolExecutionContext): Promise<CompletedToolCall> {
@@ -205,11 +207,20 @@ export class ToolExecutor {
           this.config.getSessionId(),
         );
         outputFile = savedPath;
-        const truncatedContent = formatTruncatedToolOutput(
-          content,
-          outputFile,
-          threshold,
-        );
+
+        // Apply intelligent formatting first, then fall back to character-based
+        // truncation if the result is still over the threshold.
+        const formatted = this.formatter.formatOutput(toolName, content);
+        let truncatedContent: string;
+        if (formatted.wasTruncated && formatted.content.length <= threshold) {
+          truncatedContent = formatted.content;
+        } else {
+          truncatedContent = formatTruncatedToolOutput(
+            formatted.wasTruncated ? formatted.content : content,
+            outputFile,
+            threshold,
+          );
+        }
 
         logToolOutputTruncated(
           this.config,
@@ -244,14 +255,20 @@ export class ToolExecutor {
             this.config.getSessionId(),
           );
           outputFile = savedPath;
-          const truncatedText = formatTruncatedToolOutput(
-            textContent,
-            outputFile,
-            threshold,
-          );
 
-          // We need to return a NEW array to avoid mutating the original toolResult if it matters,
-          // though here we are creating the response so it's probably fine to mutate or return new.
+          // Apply intelligent formatting first for MCP tool outputs.
+          const formatted = this.formatter.formatOutput(toolName, textContent);
+          let truncatedText: string;
+          if (formatted.wasTruncated && formatted.content.length <= threshold) {
+            truncatedText = formatted.content;
+          } else {
+            truncatedText = formatTruncatedToolOutput(
+              formatted.wasTruncated ? formatted.content : textContent,
+              outputFile,
+              threshold,
+            );
+          }
+
           const truncatedContent: Part[] = [
             { ...firstPart, text: truncatedText },
           ];
@@ -268,6 +285,46 @@ export class ToolExecutor {
 
           return { truncatedContent, outputFile };
         }
+      }
+    } else if (typeof content === 'string') {
+      // Apply intelligent formatting for non-shell built-in tools (grep, glob,
+      // read_file, ls, etc.) that return string content exceeding the threshold.
+      const threshold = this.config.getTruncateToolOutputThreshold();
+
+      if (threshold > 0 && content.length > threshold) {
+        const originalContentLength = content.length;
+        const { outputFile: savedPath } = await saveTruncatedToolOutput(
+          content,
+          toolName,
+          callId,
+          this.config.storage.getProjectTempDir(),
+          this.config.getSessionId(),
+        );
+        outputFile = savedPath;
+
+        const formatted = this.formatter.formatOutput(toolName, content);
+        let truncatedContent: string;
+        if (formatted.wasTruncated && formatted.content.length <= threshold) {
+          truncatedContent = formatted.content;
+        } else {
+          truncatedContent = formatTruncatedToolOutput(
+            formatted.wasTruncated ? formatted.content : content,
+            outputFile,
+            threshold,
+          );
+        }
+
+        logToolOutputTruncated(
+          this.config,
+          new ToolOutputTruncatedEvent(call.request.prompt_id, {
+            toolName,
+            originalContentLength,
+            truncatedContentLength: truncatedContent.length,
+            threshold,
+          }),
+        );
+
+        return { truncatedContent, outputFile };
       }
     }
 

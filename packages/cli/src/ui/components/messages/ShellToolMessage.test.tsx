@@ -16,9 +16,15 @@ import {
   CoreToolCallStatus,
 } from '@google/gemini-cli-core';
 import { renderWithProviders } from '../../../test-utils/render.js';
+import { createMockSettings } from '../../../test-utils/settings.js';
 import { waitFor } from '../../../test-utils/async.js';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SHELL_COMMAND_NAME, ACTIVE_SHELL_MAX_LINES } from '../../constants.js';
+
+// Settings with collapseToolOutput disabled so tests can assert full output.
+const expandedSettings = createMockSettings({
+  merged: { ui: { collapseToolOutput: false } },
+});
 
 describe('<ShellToolMessage />', () => {
   const baseProps: ShellToolMessageProps = {
@@ -54,6 +60,8 @@ describe('<ShellToolMessage />', () => {
   ) =>
     renderWithProviders(<ShellToolMessage {...baseProps} {...props} />, {
       uiActions,
+      // Use expanded settings by default so existing tests see full output.
+      settings: expandedSettings,
       ...options,
     });
   beforeEach(() => {

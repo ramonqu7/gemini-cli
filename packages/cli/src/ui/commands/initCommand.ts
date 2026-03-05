@@ -33,22 +33,57 @@ export const initCommand: SlashCommand = {
     const targetDir = context.services.config.getTargetDir();
     const geminiMdPath = path.join(targetDir, 'GEMINI.md');
 
-    const result = performInit(fs.existsSync(geminiMdPath));
+    const { action, generatedContent, projectInfo } = performInit(
+      fs.existsSync(geminiMdPath),
+      targetDir,
+    );
 
-    if (result.type === 'submit_prompt') {
-      // Create an empty GEMINI.md file
-      fs.writeFileSync(geminiMdPath, '', 'utf8');
+    if (action.type === 'submit_prompt') {
+      // Seed the GEMINI.md with detected content or empty
+      const initialContent = generatedContent ?? '';
+      fs.writeFileSync(geminiMdPath, initialContent, 'utf8');
 
-      context.ui.addItem(
-        {
-          type: 'info',
-          text: 'Empty GEMINI.md created. Now analyzing the project to populate it.',
-        },
-        Date.now(),
-      );
+      if (projectInfo) {
+        // Show a summary of what was detected
+        const detected: string[] = [];
+        if (projectInfo.languages.length > 0) {
+          detected.push(`Language: ${projectInfo.languages.join(', ')}`);
+        }
+        if (projectInfo.packageManager) {
+          detected.push(`Package manager: ${projectInfo.packageManager}`);
+        }
+        if (projectInfo.testFramework) {
+          detected.push(`Test framework: ${projectInfo.testFramework}`);
+        }
+        if (projectInfo.linter) {
+          detected.push(`Linter: ${projectInfo.linter}`);
+        }
+        if (projectInfo.isMonorepo) {
+          detected.push('Monorepo detected');
+        }
+
+        const summary =
+          detected.length > 0 ? `Detected: ${detected.join(' | ')}. ` : '';
+
+        context.ui.addItem(
+          {
+            type: 'info',
+            text: `${summary}GEMINI.md scaffolded. Now analyzing the project for a detailed description.`,
+          },
+          Date.now(),
+        );
+      } else {
+        context.ui.addItem(
+          {
+            type: 'info',
+            text: 'Empty GEMINI.md created. Now analyzing the project to populate it.',
+          },
+          Date.now(),
+        );
+      }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-    return result as SlashCommandActionReturn;
+    return action as SlashCommandActionReturn;
   },
 };

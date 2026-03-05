@@ -79,8 +79,10 @@ export class InitCommand implements Command {
     eventBus: ExecutionEventBus,
     taskId: string,
     contextId: string,
+    generatedContent?: string | null,
   ): Promise<CommandExecutionResponse> {
-    fs.writeFileSync(geminiMdPath, '', 'utf8');
+    const initialContent = generatedContent ?? '';
+    fs.writeFileSync(geminiMdPath, initialContent, 'utf8');
 
     if (!context.agentExecutor) {
       throw new Error('Agent executor not found in context.');
@@ -135,19 +137,20 @@ export class InitCommand implements Command {
       };
     }
 
-    const geminiMdPath = path.join(
-      process.env['CODER_AGENT_WORKSPACE_PATH']!,
-      'GEMINI.md',
+    const workspacePath = process.env['CODER_AGENT_WORKSPACE_PATH']!;
+    const geminiMdPath = path.join(workspacePath, 'GEMINI.md');
+    const { action, generatedContent } = performInit(
+      fs.existsSync(geminiMdPath),
+      workspacePath,
     );
-    const result = performInit(fs.existsSync(geminiMdPath));
 
     const taskId = uuidv4();
     const contextId = uuidv4();
 
-    switch (result.type) {
+    switch (action.type) {
       case 'message':
         return this.handleMessageResult(
-          result,
+          action,
           context,
           context.eventBus,
           taskId,
@@ -155,12 +158,13 @@ export class InitCommand implements Command {
         );
       case 'submit_prompt':
         return this.handleSubmitPromptResult(
-          result,
+          action,
           context,
           geminiMdPath,
           context.eventBus,
           taskId,
           contextId,
+          generatedContent,
         );
       default:
         throw new Error('Unknown result type from performInit');

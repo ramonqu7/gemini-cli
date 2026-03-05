@@ -747,6 +747,19 @@ const SETTINGS_SCHEMA = {
           { value: 'full', label: 'Full' },
         ],
       },
+      collapseToolOutput: {
+        type: 'boolean',
+        label: 'Collapse Tool Output',
+        category: 'UI',
+        requiresRestart: false,
+        default: true,
+        description: oneLine`
+          Show tool call results in a compact collapsed form by default.
+          Only the tool name and a brief summary are shown. Errors are
+          always expanded. Set to false to show full output inline.
+        `,
+        showInDialog: true,
+      },
       customWittyPhrases: {
         type: 'array',
         label: 'Custom Witty Phrases',
@@ -1361,6 +1374,68 @@ const SETTINGS_SCHEMA = {
         showInDialog: false,
         items: { type: 'string' },
         mergeStrategy: MergeStrategy.UNION,
+      },
+      permissions: {
+        type: 'array',
+        label: 'Tool Permissions',
+        category: 'Tools',
+        requiresRestart: true,
+        default: undefined as
+          | Array<{
+              tool: string;
+              allow?: string[];
+              deny?: string[];
+            }>
+          | undefined,
+        description: oneLine`
+          Per-tool permission rules with regex pattern matching.
+          Each rule specifies a tool name (or "*" for all tools),
+          with allow patterns (auto-approve matching invocations)
+          and deny patterns (block matching invocations even in YOLO mode).
+          For shell: patterns match against the command string.
+          For edit/write_file: patterns match against the file_path.
+          Deny rules are evaluated first and override allow rules.
+        `,
+        showInDialog: false,
+        items: {
+          type: 'object',
+          ref: 'ToolPermissionRule',
+          properties: {
+            tool: {
+              type: 'string',
+              label: 'Tool Name',
+              category: 'Tools',
+              requiresRestart: true,
+              default: '' as string,
+              description:
+                'Tool name to match (e.g., "run_shell_command", "replace", "write_file"). Use "*" for all tools.',
+              showInDialog: false,
+            },
+            allow: {
+              type: 'array',
+              label: 'Allow Patterns',
+              category: 'Tools',
+              requiresRestart: true,
+              default: undefined as string[] | undefined,
+              description:
+                'Regex patterns to auto-approve. Matched against the tool\'s primary argument (command for shell, file_path for edit).',
+              showInDialog: false,
+              items: { type: 'string' },
+            },
+            deny: {
+              type: 'array',
+              label: 'Deny Patterns',
+              category: 'Tools',
+              requiresRestart: true,
+              default: undefined as string[] | undefined,
+              description:
+                'Regex patterns to always deny (even in YOLO mode). Matched against the tool\'s primary argument.',
+              showInDialog: false,
+              items: { type: 'string' },
+            },
+          },
+        },
+        mergeStrategy: MergeStrategy.CONCAT,
       },
       discoveryCommand: {
         type: 'string',
@@ -2636,6 +2711,32 @@ export const SETTINGS_SCHEMA_DEFINITIONS: Record<
         },
       },
     },
+  },
+  ToolPermissionRule: {
+    type: 'object',
+    description:
+      'Per-tool permission rule with regex pattern matching for auto-approve/deny.',
+    additionalProperties: false,
+    properties: {
+      tool: {
+        type: 'string',
+        description:
+          'Tool name to match (e.g., "run_shell_command", "replace", "write_file"). Use "*" for all tools.',
+      },
+      allow: {
+        type: 'array',
+        description:
+          'Regex patterns to auto-approve. For shell: matches command; for edit/write_file: matches file_path.',
+        items: { type: 'string' },
+      },
+      deny: {
+        type: 'array',
+        description:
+          'Regex patterns to always deny (even in YOLO mode). For shell: matches command; for edit/write_file: matches file_path.',
+        items: { type: 'string' },
+      },
+    },
+    required: ['tool'],
   },
 };
 

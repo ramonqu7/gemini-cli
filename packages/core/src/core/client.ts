@@ -41,7 +41,11 @@ import type {
   ResumedSessionData,
 } from '../services/chatRecordingService.js';
 import type { ContentGenerator } from './contentGenerator.js';
-import { LoopDetectionService } from '../services/loopDetectionService.js';
+import {
+  LoopDetectionService,
+  type LoopDetectionResult,
+} from '../services/loopDetectionService.js';
+import { LoopRecoveryService } from '../services/loopRecoveryService.js';
 import { ChatCompressionService } from '../services/chatCompressionService.js';
 import { ideContextStore } from '../ide/ideContext.js';
 import {
@@ -72,6 +76,10 @@ import {
 import { resolveModel, isGemini2Model } from '../config/models.js';
 import { partToString } from '../utils/partUtils.js';
 import { coreEvents, CoreEvent } from '../utils/events.js';
+import { PrefetchService } from '../services/prefetchService.js';
+import { prefetchServiceInstance } from '../services/prefetchServiceInstance.js';
+import { SmartContextService } from '../services/smartContextService.js';
+import { StreamingToolPipelineService } from '../services/streamingToolPipelineService.js';
 
 const MAX_TURNS = 100;
 
@@ -92,8 +100,12 @@ export class GeminiClient {
   private sessionTurnCount = 0;
 
   private readonly loopDetector: LoopDetectionService;
+  private readonly loopRecovery: LoopRecoveryService;
   private readonly compressionService: ChatCompressionService;
   private readonly toolOutputMaskingService: ToolOutputMaskingService;
+  private readonly prefetchService: PrefetchService;
+  private readonly smartContextService: SmartContextService;
+  private readonly streamingToolPipeline: StreamingToolPipelineService;
   private lastPromptId: string;
   private currentSequenceModel: string | null = null;
   private lastSentIdeContext: IdeContext | undefined;
@@ -107,9 +119,16 @@ export class GeminiClient {
 
   constructor(private readonly config: Config) {
     this.loopDetector = new LoopDetectionService(config);
+    this.loopRecovery = new LoopRecoveryService();
     this.compressionService = new ChatCompressionService();
     this.toolOutputMaskingService = new ToolOutputMaskingService();
+    this.smartContextService = new SmartContextService();
+    this.prefetchService = new PrefetchService(this.smartContextService);
+    this.streamingToolPipeline = new StreamingToolPipelineService(this.config);
     this.lastPromptId = this.config.getSessionId();
+
+    // Register the prefetch service singleton so tools can access it.
+    prefetchServiceInstance.set(this.prefetchService);
 
     coreEvents.on(CoreEvent.ModelChanged, this.handleModelChanged);
   }
@@ -264,6 +283,15 @@ export class GeminiClient {
     this.forceFullIdeContext = true;
   }
 
+  /**
+   * Returns the streaming tool pipeline service. This allows callers
+   * (e.g., the scheduler) to check for pre-computed results from tools
+   * that were speculatively executed during model streaming.
+   */
+  getStreamingToolPipeline(): StreamingToolPipelineService {
+    return this.streamingToolPipeline;
+  }
+
   private lastUsedModelId?: string;
 
   async setTools(modelId?: string): Promise<void> {
@@ -289,6 +317,17 @@ export class GeminiClient {
 
   dispose() {
     coreEvents.off(CoreEvent.ModelChanged, this.handleModelChanged);
+
+    // Log prefetch stats and clean up.
+    const stats = this.prefetchService.getStats();
+    if (stats.prefetched > 0 || stats.hits > 0) {
+      debugLogger.debug(
+        `[Prefetch] Session stats: ${stats.prefetched} prefetched, ` +
+          `${stats.hits} hits, ${stats.misses} misses`,
+      );
+    }
+    this.prefetchService.clearCache();
+    prefetchServiceInstance.clear();
   }
 
   async resumeChat(
@@ -305,6 +344,10 @@ export class GeminiClient {
 
   getLoopDetectionService(): LoopDetectionService {
     return this.loopDetector;
+  }
+
+  getLoopRecoveryService(): LoopRecoveryService {
+    return this.loopRecovery;
   }
 
   getCurrentSequenceModel(): string | null {
@@ -636,17 +679,23 @@ export class GeminiClient {
       this.forceFullIdeContext = false;
     }
 
-    // Re-initialize turn with fresh history
-    turn = new Turn(this.getChat(), prompt_id);
+    // Re-initialize turn with fresh history.
+    // Reset the streaming tool pipeline to clear any stale pre-computed results
+    // from prior turns, then pass it so the Turn can queue read-only tool calls
+    // for speculative early execution while the model continues streaming.
+    this.streamingToolPipeline.reset();
+    turn = new Turn(
+      this.getChat(),
+      prompt_id,
+      this.streamingToolPipeline,
+      signal,
+    );
 
     const controller = new AbortController();
     const linkedSignal = AbortSignal.any([signal, controller.signal]);
 
     const loopResult = await this.loopDetector.turnStarted(signal);
-    if (loopResult.count > 1) {
-      yield { type: GeminiEventType.LoopDetected };
-      return turn;
-    } else if (loopResult.count === 1) {
+    if (loopResult.count >= 1) {
       if (boundedTurns <= 1) {
         yield { type: GeminiEventType.MaxSessionTurns };
         return turn;
@@ -712,11 +761,7 @@ export class GeminiClient {
     let loopRecoverResult: { detail?: string } | undefined;
     for await (const event of resultStream) {
       const loopResult = this.loopDetector.addAndCheck(event);
-      if (loopResult.count > 1) {
-        yield { type: GeminiEventType.LoopDetected };
-        loopDetectedAbort = true;
-        break;
-      } else if (loopResult.count === 1) {
+      if (loopResult.count >= 1) {
         if (boundedTurns <= 1) {
           yield { type: GeminiEventType.MaxSessionTurns };
           loopDetectedAbort = true;
@@ -855,9 +900,19 @@ export class GeminiClient {
 
     if (this.lastPromptId !== prompt_id) {
       this.loopDetector.reset(prompt_id, partListUnionToString(request));
+      this.loopRecovery.reset();
       this.hookStateMap.delete(this.lastPromptId);
       this.lastPromptId = prompt_id;
       this.currentSequenceModel = null;
+
+      // Fire-and-forget: speculatively pre-fetch files the model is
+      // likely to request based on the user's prompt.
+      const promptText = partListUnionToString(request);
+      this.prefetchService
+        .prefetch(promptText, this.config.getTargetDir())
+        .catch((err) => {
+          debugLogger.warn(`[Prefetch] Error during pre-fetch: ${err}`);
+        });
     }
 
     if (hooksEnabled && messageBus) {
@@ -1171,10 +1226,14 @@ export class GeminiClient {
   }
 
   /**
-   * Handles loop recovery by providing feedback to the model and initiating a new turn.
+   * Handles loop recovery by providing targeted feedback to the model and
+   * initiating a new turn. Uses the {@link LoopRecoveryService} to generate
+   * messages tailored to the type of loop detected (e.g. repeated tool calls,
+   * content chanting, LLM-detected loops). After the maximum number of
+   * recovery attempts is exceeded, the agent loop is stopped.
    */
   private _recoverFromLoop(
-    loopResult: { detail?: string },
+    loopResult: LoopDetectionResult,
     signal: AbortSignal,
     prompt_id: string,
     boundedTurns: number,
@@ -1184,20 +1243,37 @@ export class GeminiClient {
   ): AsyncGenerator<ServerGeminiStreamEvent, Turn> {
     controllerToAbort?.abort();
 
-    // Clear the detection flag so the recursive turn can proceed, but the count remains 1.
+    // Clear the detection flag so the recursive turn can proceed, but the count remains.
     this.loopDetector.clearDetection();
 
-    const feedbackText = `System: Potential loop detected. Details: ${loopResult.detail || 'Repetitive patterns identified'}. Please take a step back and confirm you're making forward progress. If not, take a step back, analyze your previous actions and rethink how you're approaching the problem. Avoid repeating the same tool calls or responses without new results.`;
+    const recoveryMessage = this.loopRecovery.attemptRecovery(loopResult);
+
+    if (recoveryMessage === null) {
+      // Max recovery attempts exceeded — abort the agent loop.
+      if (this.config.getDebugMode()) {
+        debugLogger.warn(
+          `Loop Recovery: Max attempts (${this.loopRecovery.getRecoveryAttempts()}) exceeded. Aborting.`,
+        );
+      }
+      // Return a generator that immediately yields LoopDetected and returns an empty turn.
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const self = this;
+      
+      return (async function* () {
+        yield { type: GeminiEventType.LoopDetected } as ServerGeminiStreamEvent;
+        return new Turn(self.getChat(), prompt_id);
+      })();
+    }
 
     if (this.config.getDebugMode()) {
       debugLogger.warn(
-        'Iterative Loop Recovery: Injecting feedback message to model.',
+        `Loop Recovery: Attempt ${this.loopRecovery.getRecoveryAttempts()}. Injecting targeted recovery message.`,
       );
     }
 
-    const feedback = [{ text: feedbackText }];
+    const feedback = [{ text: recoveryMessage }];
 
-    // Recursive call with feedback
+    // Recursive call with the targeted recovery message.
     return this.sendMessageStream(
       feedback,
       signal,

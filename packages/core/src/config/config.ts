@@ -35,6 +35,8 @@ import { WebSearchTool } from '../tools/web-search.js';
 import { AskUserTool } from '../tools/ask-user.js';
 import { ExitPlanModeTool } from '../tools/exit-plan-mode.js';
 import { EnterPlanModeTool } from '../tools/enter-plan-mode.js';
+import { BatchReadFilesTool } from '../tools/batch-read-files.js';
+import { BatchShellCommandsTool } from '../tools/batch-shell-commands.js';
 import { GeminiClient } from '../core/client.js';
 import { BaseLlmClient } from '../core/baseLlmClient.js';
 import { LocalLiteRtLmClient } from '../core/localLiteRtLmClient.js';
@@ -70,6 +72,7 @@ import {
   StandardFileSystemService,
   type FileSystemService,
 } from '../services/fileSystemService.js';
+import { StateSnapshotService } from '../services/stateSnapshotService.js';
 import {
   TrackerCreateTaskTool,
   TrackerUpdateTaskTool,
@@ -155,6 +158,7 @@ import { CheckerRunner } from '../safety/checker-runner.js';
 import { ContextBuilder } from '../safety/context-builder.js';
 import { CheckerRegistry } from '../safety/registry.js';
 import { ConsecaSafetyChecker } from '../safety/conseca/conseca.js';
+import { PlanExecutionService } from '../services/planExecutionService.js';
 
 export interface AccessibilitySettings {
   /** @deprecated Use ui.loadingPhrases instead. */
@@ -173,6 +177,12 @@ export interface SummarizeToolOutputSettings {
 export interface PlanSettings {
   directory?: string;
   modelRouting?: boolean;
+}
+
+export interface ThinkingSettings {
+  /** When true, dynamically adjusts thinking budget based on task complexity.
+   *  Defaults to true. Set to false to use the static budget from model config. */
+  dynamicBudget?: boolean;
 }
 
 export interface TelemetrySettings {
@@ -597,6 +607,7 @@ export interface ConfigParameters {
   billing?: {
     overageStrategy?: OverageStrategy;
   };
+  thinking?: ThinkingSettings;
 }
 
 export class Config implements McpContext {
@@ -615,6 +626,7 @@ export class Config implements McpContext {
   private sessionId: string;
   private clientVersion: string;
   private fileSystemService: FileSystemService;
+  private readonly stateSnapshotService: StateSnapshotService;
   private trackerService?: TrackerService;
   private contentGeneratorConfig!: ContentGeneratorConfig;
   private contentGenerator!: ContentGenerator;
@@ -804,14 +816,19 @@ export class Config implements McpContext {
   private lastModeSwitchTime: number = performance.now();
   readonly userHintService: UserHintService;
   private approvedPlanPath: string | undefined;
+  private readonly planExecutionService: PlanExecutionService;
+  private readonly thinkingSettings: ThinkingSettings;
 
   constructor(params: ConfigParameters) {
     this.sessionId = params.sessionId;
     this.clientVersion = params.clientVersion ?? 'unknown';
     this.approvedPlanPath = undefined;
+    this.planExecutionService = new PlanExecutionService();
+    this.thinkingSettings = params.thinking ?? { dynamicBudget: true };
     this.embeddingModel =
       params.embeddingModel ?? DEFAULT_GEMINI_EMBEDDING_MODEL;
     this.fileSystemService = new StandardFileSystemService();
+    this.stateSnapshotService = new StateSnapshotService();
     this.sandbox = params.sandbox;
     this.targetDir = path.resolve(params.targetDir);
     this.folderTrust = params.folderTrust ?? false;
@@ -2304,6 +2321,21 @@ export class Config implements McpContext {
     this.approvedPlanPath = path;
   }
 
+  /**
+   * Returns the plan execution service for step-by-step plan execution.
+   */
+  getPlanExecutionService(): PlanExecutionService {
+    return this.planExecutionService;
+  }
+
+  getThinkingSettings(): ThinkingSettings {
+    return this.thinkingSettings;
+  }
+
+  isDynamicThinkingBudgetEnabled(): boolean {
+    return this.thinkingSettings.dynamicBudget !== false;
+  }
+
   isAgentsEnabled(): boolean {
     return this.enableAgents;
   }
@@ -2364,6 +2396,13 @@ export class Config implements McpContext {
    */
   getFileSystemService(): FileSystemService {
     return this.fileSystemService;
+  }
+
+  /**
+   * Get the StateSnapshotService used to track session state for compression.
+   */
+  getStateSnapshotService(): StateSnapshotService {
+    return this.stateSnapshotService;
   }
 
   /**
@@ -2833,6 +2872,14 @@ export class Config implements McpContext {
     );
     maybeRegister(ShellTool, () =>
       registry.registerTool(new ShellTool(this, this.messageBus)),
+    );
+    maybeRegister(BatchReadFilesTool, () =>
+      registry.registerTool(new BatchReadFilesTool(this, this.messageBus)),
+    );
+    maybeRegister(BatchShellCommandsTool, () =>
+      registry.registerTool(
+        new BatchShellCommandsTool(this, this.messageBus),
+      ),
     );
     maybeRegister(MemoryTool, () =>
       registry.registerTool(new MemoryTool(this.messageBus)),

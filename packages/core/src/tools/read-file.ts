@@ -31,6 +31,8 @@ import { READ_FILE_TOOL_NAME, READ_FILE_DISPLAY_NAME } from './tool-names.js';
 import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import { READ_FILE_DEFINITION } from './definitions/coreTools.js';
 import { resolveToolDeclaration } from './definitions/resolver.js';
+import { prefetchServiceInstance } from '../services/prefetchServiceInstance.js';
+import { debugLogger } from '../utils/debugLogger.js';
 
 /**
  * Parameters for the ReadFile tool
@@ -104,6 +106,43 @@ class ReadFileToolInvocation extends BaseToolInvocation<
       };
     }
 
+    // Check prefetch cache for full-file reads (no line range specified).
+    const prefetchService = prefetchServiceInstance.get();
+    if (
+      prefetchService &&
+      this.params.start_line === undefined &&
+      this.params.end_line === undefined
+    ) {
+      const cached = prefetchService.getCached(this.resolvedPath);
+      if (cached?.content !== null && cached?.content !== undefined) {
+        debugLogger.debug(
+          `[Prefetch] Serving cached content for ${this.resolvedPath}`,
+        );
+
+        const lines = cached.content.split('\n').length;
+        const mimetype = getSpecificMimeType(this.resolvedPath);
+        const programming_language = getProgrammingLanguage({
+          file_path: this.resolvedPath,
+        });
+        logFileOperation(
+          this.config,
+          new FileOperationEvent(
+            READ_FILE_TOOL_NAME,
+            FileOperation.READ,
+            lines,
+            mimetype,
+            path.extname(this.resolvedPath),
+            programming_language,
+          ),
+        );
+
+        return {
+          llmContent: cached.content,
+          returnDisplay: `${makeRelative(this.resolvedPath, this.config.getTargetDir())} (prefetched)`,
+        };
+      }
+    }
+
     const result = await processSingleFileContent(
       this.resolvedPath,
       this.config.getTargetDir(),
@@ -111,6 +150,12 @@ class ReadFileToolInvocation extends BaseToolInvocation<
       this.params.start_line,
       this.params.end_line,
     );
+
+    // Add successfully read content to the prefetch cache for
+    // subsequent reads within the same turn.
+    if (!result.error && prefetchService && typeof result.llmContent === 'string') {
+      prefetchService.addToCache(this.resolvedPath, result.llmContent);
+    }
 
     if (result.error) {
       return {

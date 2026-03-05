@@ -5,21 +5,96 @@
  */
 
 import type { CommandActionReturn } from './types.js';
+import {
+  analyzeProject,
+  generateGeminiMd,
+} from '../services/projectAnalyzerService.js';
+import type { ProjectInfo } from '../services/projectAnalyzerService.js';
 
-export function performInit(doesGeminiMdExist: boolean): CommandActionReturn {
+export { type ProjectInfo } from '../services/projectAnalyzerService.js';
+
+/**
+ * Result of the init command, including the generated content and project info
+ * when a new GEMINI.md is created.
+ */
+export interface InitResult {
+  action: CommandActionReturn;
+  /** The generated GEMINI.md content, if a new file was created. */
+  generatedContent: string | null;
+  /** The detected project info, if analysis was performed. */
+  projectInfo: ProjectInfo | null;
+}
+
+export function performInit(
+  doesGeminiMdExist: boolean,
+  targetDir?: string,
+): InitResult {
   if (doesGeminiMdExist) {
     return {
-      type: 'message',
-      messageType: 'info',
-      content:
-        'A GEMINI.md file already exists in this directory. No changes were made.',
+      action: {
+        type: 'message',
+        messageType: 'info',
+        content:
+          'A GEMINI.md file already exists in this directory. No changes were made.',
+      },
+      generatedContent: null,
+      projectInfo: null,
     };
   }
 
+  // If no targetDir provided, fall back to LLM-based analysis
+  if (!targetDir) {
+    return {
+      action: {
+        type: 'submit_prompt',
+        content: buildLlmAnalysisPrompt(),
+      },
+      generatedContent: null,
+      projectInfo: null,
+    };
+  }
+
+  // Fast file-existence-based analysis
+  const projectInfo = analyzeProject(targetDir);
+  const content = generateGeminiMd(projectInfo);
+
   return {
-    type: 'submit_prompt',
-    content: `
-You are an AI agent that brings the power of Gemini directly into the terminal. Your task is to analyze the current directory and generate a comprehensive GEMINI.md file to be used as instructional context for future interactions.
+    action: {
+      type: 'submit_prompt',
+      content: buildLlmAnalysisPrompt(content),
+    },
+    generatedContent: content,
+    projectInfo,
+  };
+}
+
+/**
+ * Builds the LLM prompt for project analysis.
+ * If a pre-generated scaffold is provided, the LLM is instructed to refine it
+ * rather than start from scratch.
+ */
+function buildLlmAnalysisPrompt(scaffold?: string): string {
+  if (scaffold) {
+    return `You are an AI agent that brings the power of Gemini directly into the terminal. Your task is to analyze the current directory and generate a comprehensive GEMINI.md file to be used as instructional context for future interactions.
+
+I've already done a quick scan of the project and generated this initial scaffold:
+
+\`\`\`markdown
+${scaffold}\`\`\`
+
+**Your task:**
+
+1. Read the README file (e.g., \`README.md\`, \`README.txt\`) if it exists.
+2. Read up to 5 additional key files to understand the project better.
+3. Enhance the scaffold above with:
+   - A concise **Project Overview** section describing the project's purpose and architecture.
+   - Any additional build/test/lint commands you discover.
+   - Any coding conventions or development practices you can infer.
+4. Write the final, complete content to the \`GEMINI.md\` file. Keep it concise and useful.
+`;
+  }
+
+  return `You are an AI agent that brings the power of Gemini directly into the terminal. Your task is to analyze the current directory and generate a comprehensive GEMINI.md file to be used as instructional context for future interactions.
 
 **Analysis Process:**
 
@@ -52,6 +127,5 @@ You are an AI agent that brings the power of Gemini directly into the terminal. 
 **Final Output:**
 
 Write the complete content to the \`GEMINI.md\` file. The output must be well-formatted Markdown.
-`,
-  };
+`;
 }

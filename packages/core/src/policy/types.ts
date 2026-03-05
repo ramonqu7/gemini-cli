@@ -281,6 +281,19 @@ export interface PolicyEngineConfig {
   approvalMode?: ApprovalMode;
 }
 
+/**
+ * A user-facing permission rule for a specific tool.
+ * Configured in settings.json under tools.permissions.
+ */
+export interface ToolPermissionRuleConfig {
+  /** Tool name to match (e.g., 'run_shell_command', 'replace', 'write_file'). Use '*' for all tools. */
+  tool: string;
+  /** Regex patterns to auto-approve. For shell: matches command; for edit/write_file: matches file_path. */
+  allow?: string[];
+  /** Regex patterns to always deny (even in YOLO mode). For shell: matches command; for edit/write_file: matches file_path. */
+  deny?: string[];
+}
+
 export interface PolicySettings {
   mcp?: {
     excluded?: string[];
@@ -289,6 +302,7 @@ export interface PolicySettings {
   tools?: {
     exclude?: string[];
     allowed?: string[];
+    permissions?: ToolPermissionRuleConfig[];
   };
   mcpServers?: Record<string, { trust?: boolean }>;
   // User provided policies that will replace the USER level policies in ~/.gemini/policies

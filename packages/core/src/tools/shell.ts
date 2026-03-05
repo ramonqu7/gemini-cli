@@ -44,6 +44,7 @@ import { SHELL_TOOL_NAME } from './tool-names.js';
 import type { MessageBus } from '../confirmation-bus/message-bus.js';
 import { getShellDefinition } from './definitions/coreTools.js';
 import { resolveToolDeclaration } from './definitions/resolver.js';
+import { getGitSafetyService } from '../services/gitSafetyService.js';
 
 export const OUTPUT_UPDATE_INTERVAL_MS = 1000;
 
@@ -160,6 +161,24 @@ export class ShellToolInvocation extends BaseToolInvocation<
         returnDisplay: 'Command cancelled by user.',
       };
     }
+
+    // Git safety check — enforced regardless of approval mode (even YOLO)
+    const gitSafety = getGitSafetyService().checkCommand(strippedCommand);
+    if (!gitSafety.allowed) {
+      const blockedMessage = `Git Safety: ${gitSafety.reason}${gitSafety.suggestion ? `\nSuggestion: ${gitSafety.suggestion}` : ''}`;
+      return {
+        llmContent: blockedMessage,
+        returnDisplay: blockedMessage,
+        error: {
+          message: blockedMessage,
+          type: ToolErrorType.SHELL_EXECUTE_ERROR,
+        },
+      };
+    }
+    // Store warning to append to output later if present
+    const gitSafetyWarning = gitSafety.warning
+      ? `\n\nGit Safety Warning: ${gitSafety.warning}${gitSafety.suggestion ? `\nSuggestion: ${gitSafety.suggestion}` : ''}`
+      : '';
 
     const isWindows = os.platform() === 'win32';
     const tempFileName = `shell_pgrep_${crypto
@@ -378,6 +397,11 @@ export class ShellToolInvocation extends BaseToolInvocation<
         }
 
         llmContent = llmContentParts.join('\n');
+      }
+
+      // Append git safety warning to llmContent if present
+      if (gitSafetyWarning) {
+        llmContent += gitSafetyWarning;
       }
 
       let returnDisplayMessage = '';

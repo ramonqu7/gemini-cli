@@ -58,6 +58,12 @@ describe('planCommand', () => {
           getApprovedPlanPath: vi.fn(),
           getApprovalMode: vi.fn(),
           getFileSystemService: vi.fn(),
+          getPlanExecutionService: vi.fn().mockReturnValue({
+            getState: vi.fn().mockReturnValue(null),
+            formatPlan: vi.fn().mockReturnValue('No active plan.'),
+            isExecuting: vi.fn().mockReturnValue(false),
+            isActive: vi.fn().mockReturnValue(false),
+          }),
           storage: {
             getPlansDir: vi.fn().mockReturnValue('/mock/plans/dir'),
           },

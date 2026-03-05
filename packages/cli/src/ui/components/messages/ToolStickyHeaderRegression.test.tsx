@@ -5,6 +5,7 @@
  */
 
 import { renderWithProviders } from '../../../test-utils/render.js';
+import { createMockSettings } from '../../../test-utils/settings.js';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ToolGroupMessage } from './ToolGroupMessage.js';
 import {
@@ -16,6 +17,10 @@ import { act, useRef, useEffect } from 'react';
 import { waitFor } from '../../../test-utils/async.js';
 import { SHELL_COMMAND_NAME } from '../../constants.js';
 import { CoreToolCallStatus } from '@google/gemini-cli-core';
+
+const expandedSettings = createMockSettings({
+  merged: { ui: { collapseToolOutput: false } },
+});
 
 // Mock child components that might be complex
 vi.mock('../TerminalOutput.js', () => ({
@@ -96,6 +101,7 @@ describe('ToolMessage Sticky Header Regression', () => {
         <TestComponent />
       </Box>,
       {
+        settings: expandedSettings,
         width: terminalWidth,
         uiState: { terminalWidth },
       },
@@ -186,6 +192,7 @@ describe('ToolMessage Sticky Header Regression', () => {
         <TestComponent />
       </Box>,
       {
+        settings: expandedSettings,
         width: terminalWidth,
         uiState: { terminalWidth },
       },

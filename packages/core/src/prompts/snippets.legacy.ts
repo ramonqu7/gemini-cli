@@ -164,6 +164,13 @@ export function renderCoreMandates(options?: CoreMandatesOptions): string {
 - ${mandateConfirm(options.interactive)}
 - **Explaining Changes:** After completing a code modification or file operation *do not* provide summaries unless asked.
 - **Do Not revert changes:** Do not revert changes to the codebase unless asked to do so by the user. Only revert changes made by you if they have resulted in an error or if the user has explicitly asked you to revert the changes.${mandateSkillGuidance(options.hasSkills)}${mandateExplainBeforeActing(options.isGemini3)}${mandateContinueWork(options.interactive)}
+
+## Code Editing Strategy
+When modifying existing files, ALWAYS use \`${EDIT_TOOL_NAME}\` with \`old_string\`/\`new_string\` for targeted search-and-replace. This is the DEFAULT and PREFERRED method:
+- **Targeted changes** (bug fix, adding an import, updating a function): Use \`${EDIT_TOOL_NAME}\` with the exact text to find in \`old_string\` and the replacement in \`new_string\`. Include 2-3 lines of surrounding context in \`old_string\` to ensure a unique match.
+- **Multiple edits to one file**: Make separate \`${EDIT_TOOL_NAME}\` calls for each change.
+- **New files only**: Use \`${WRITE_FILE_TOOL_NAME}\` exclusively when creating files that do not exist yet.
+- **AVOID \`${WRITE_FILE_TOOL_NAME}\` for existing files** — it overwrites the entire file, which is error-prone, produces large diffs, and wastes context. Only use it if you are replacing the vast majority of the file content.
 `.trim();
 }
 
@@ -269,6 +276,10 @@ ${shellEfficiencyGuidelines(options.enableShellEfficiency)}
 
 ## Tool Usage
 - **Parallelism:** Execute multiple independent tool calls in parallel when feasible (i.e. searching the codebase).
+- **Batch Operations:** When you need to read multiple files or run multiple independent commands, use the batch tools for efficiency:
+  - \`batch_read_files\`: Read up to 10 files simultaneously in a single call.
+  - \`batch_shell_commands\`: Run up to 5 independent commands simultaneously in a single call.
+  This is faster than making sequential tool calls. Use batch tools whenever you need information from multiple sources.
 - **Command Execution:** Use the '${SHELL_TOOL_NAME}' tool for running shell commands, remembering the safety rule to explain modifying commands first.${toolUsageInteractive(
     options.interactive,
     options.interactiveShellEnabled,

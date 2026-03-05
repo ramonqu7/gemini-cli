@@ -164,11 +164,21 @@ export class PromptProvider {
         ),
         planningWorkflow: this.withSection(
           'planningWorkflow',
-          () => ({
-            planModeToolsList,
-            plansDir: config.storage.getPlansDir(),
-            approvedPlanPath: config.getApprovedPlanPath(),
-          }),
+          () => {
+            // Get step execution prompt if a plan is actively being executed
+            const planExecService = config.getPlanExecutionService?.();
+            const stepExecutionPrompt =
+              planExecService?.isExecuting()
+                ? planExecService.getStepPrompt()
+                : undefined;
+
+            return {
+              planModeToolsList,
+              plansDir: config.storage.getPlansDir(),
+              approvedPlanPath: config.getApprovedPlanPath(),
+              stepExecutionPrompt,
+            };
+          },
           isPlanMode,
         ),
         operationalGuidelines: this.withSection(

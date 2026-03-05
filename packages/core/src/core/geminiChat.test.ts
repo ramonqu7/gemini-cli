@@ -187,6 +187,7 @@ describe('GeminiChat', () => {
       getModelAvailabilityService: vi
         .fn()
         .mockReturnValue(createAvailabilityServiceMock()),
+      isDynamicThinkingBudgetEnabled: vi.fn().mockReturnValue(false),
     } as unknown as Config;
 
     // Use proper MessageBus mocking for Phase 3 preparation
