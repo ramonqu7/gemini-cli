@@ -462,6 +462,39 @@ export async function createPolicyEngineConfig(
     rules.push(...permissionRules);
   }
 
+  // Built-in safety: external write actions ALWAYS require confirmation.
+  // These override even YOLO mode to prevent accidental posts to Buganizer,
+  // CL updates, doc edits, or production changes.
+  const EXTERNAL_WRITE_TOOLS = [
+    'mcp__buganizer__add_buganizer_comment',
+    'mcp__buganizer__create_buganizer_issue',
+    'mcp__buganizer__edit_title',
+    'mcp__buganizer__update_issue_*',
+    'mcp__buganizer__reassign_*',
+    'mcp__buganizer__mark_issue_*',
+    'mcp__buganizer__set_issue_*',
+    'mcp__coding__create_changelist',
+    'mcp__coding__update_changelist',
+    'mcp__coding__update_changelist_reviewer',
+    'mcp__workspace__create_document',
+    'mcp__workspace__update_document',
+    'mcp__workspace__replace_paragraph',
+    'mcp__production__cdpush_*',
+    'mcp__production__sisyphus_*',
+    'mcp__srcportal__*Create*',
+    'mcp__srcportal__*Write*',
+    'mcp__srcportal__*Replace*',
+    'mcp__srcportal__*Delete*',
+  ];
+  for (const toolPattern of EXTERNAL_WRITE_TOOLS) {
+    rules.push({
+      toolName: toolPattern,
+      decision: PolicyDecision.ASK_USER,
+      priority: TOOL_PERMISSION_DENY_PRIORITY,
+      source: 'Built-in (External Write Safety)',
+    });
+  }
+
   return {
     rules,
     checkers,
