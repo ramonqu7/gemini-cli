@@ -218,6 +218,18 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
       extends: 'gemini-3-flash-base',
       modelConfig: {},
     },
+    'auto-memory-evaluator': {
+      extends: 'base',
+      modelConfig: {
+        model: 'gemini-2.5-flash-lite',
+        generateContentConfig: {
+          maxOutputTokens: 256,
+          thinkingConfig: {
+            thinkingBudget: 0,
+          },
+        },
+      },
+    },
     'chat-compression-3-pro': {
       modelConfig: {
         model: 'gemini-3-pro-preview',

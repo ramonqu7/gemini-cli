@@ -144,6 +144,13 @@
       }
     }
   },
+  "codebase-investigator": {
+    "model": "gemini-2.0-flash",
+    "generateContentConfig": {
+      "temperature": 0.1,
+      "topP": 0.95
+    }
+  },
   "edit-corrector": {
     "model": "gemini-2.5-flash-lite",
     "generateContentConfig": {
@@ -227,6 +234,17 @@
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1
+    }
+  },
+  "auto-memory-evaluator": {
+    "model": "gemini-2.5-flash-lite",
+    "generateContentConfig": {
+      "temperature": 0,
+      "topP": 1,
+      "maxOutputTokens": 256,
+      "thinkingConfig": {
+        "thinkingBudget": 0
+      }
     }
   },
   "chat-compression-3-pro": {

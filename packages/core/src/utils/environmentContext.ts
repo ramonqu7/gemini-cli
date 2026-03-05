@@ -7,6 +7,7 @@
 import type { Part, Content } from '@google/genai';
 import type { Config } from '../config/config.js';
 import { getFolderStructure } from './getFolderStructure.js';
+import { loadAutoMemories } from '../services/autoMemoryService.js';
 
 export const INITIAL_HISTORY_LENGTH = 1;
 
@@ -58,6 +59,11 @@ export async function getEnvironmentContext(config: Config): Promise<Part[]> {
     : '';
   const tempDir = config.storage.getProjectTempDir();
   const environmentMemory = config.getEnvironmentMemory();
+  const autoMemories = await loadAutoMemories();
+
+  const autoMemorySection = autoMemories
+    ? `\n<auto_memories>\nThese are things you learned from previous sessions with this user. Respect these preferences and facts:\n${autoMemories}\n</auto_memories>`
+    : '';
 
   const context = `
 <session_context>
@@ -67,7 +73,7 @@ My operating system is: ${platform}
 The project's temporary directory is: ${tempDir}
 ${directoryContext}
 
-${environmentMemory}
+${environmentMemory}${autoMemorySection}
 </session_context>`.trim();
 
   const initialParts: Part[] = [{ text: context }];
