@@ -1,0 +1,43 @@
+#!/bin/bash
+# Gemini CLI (fork) — runs your local build with the official internal proxy
+set -e
+
+REPO_DIR="/usr/local/google/home/ramonqu/gemini-cli"
+PROXY_PID=""
+PORT_FILE=$(mktemp -t gemini_api_proxy_port.XXXXXXXXXX)
+EXPERIMENTS_FILE=$(mktemp -t gemini_cli_experiments.XXXXXXXXXX)
+PROXY_BINARY="/google/bin/releases/gemini-cli/tools/gemini_api_proxy"
+
+cleanup() {
+  [[ -n "${PROXY_PID}" ]] && kill -TERM "${PROXY_PID}" 2>/dev/null || true
+  rm -f "${PORT_FILE}" "${EXPERIMENTS_FILE}"
+}
+trap cleanup EXIT
+
+"${PROXY_BINARY}" \
+  --port 0 \
+  --port_file="${PORT_FILE}" \
+  --genai_backend="blade:google.ai.generativelanguage.v1main.generativeservice-prod" \
+  --project="shared-g3-gemini-quota" \
+  --enable_sawmill_logging=true \
+  --experiments_file="${EXPERIMENTS_FILE}" \
+  --credential_exchanger_call_gaia_client_with_compass_stub_task_percentage=0 \
+  2>/dev/null &
+PROXY_PID=$!
+
+for i in $(seq 1 60); do [[ -s "${PORT_FILE}" ]] && break; sleep 0.5; done
+PROXY_PORT=$(cat "${PORT_FILE}" 2>/dev/null)
+[[ -z "${PROXY_PORT}" ]] && echo "ERROR: Proxy failed to start" >&2 && exit 1
+
+for i in $(seq 1 20); do [[ -s "${EXPERIMENTS_FILE}" ]] && break; sleep 0.2; done
+[[ ! -s "${EXPERIMENTS_FILE}" ]] && echo "{}" > "${EXPERIMENTS_FILE}"
+
+export GOOGLE_GEMINI_BASE_URL="http://localhost:${PROXY_PORT}"
+export GEMINI_API_KEY="api_proxy:shared-g3-gemini-quota"
+export GEMINI_EXP="${EXPERIMENTS_FILE}"
+export GEMINI_TELEMETRY_ENABLED=true
+export GEMINI_TELEMETRY_TARGET=local
+export GEMINI_TELEMETRY_OTLP_PROTOCOL=http
+export GEMINI_TELEMETRY_OTLP_ENDPOINT="http://localhost:${PROXY_PORT}/logevent"
+
+exec node --no-deprecation "${REPO_DIR}/packages/cli/dist/index.js" "$@"
