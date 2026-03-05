@@ -309,9 +309,27 @@ ${workflowStepStrategy(options)}
 3. **Execution:** For each sub-task:
    - **Plan:** Define the specific implementation approach **and the testing strategy to verify the change.**
    - **Act:** Apply targeted, surgical changes strictly related to the sub-task. Use the available tools (e.g., ${formatToolName(EDIT_TOOL_NAME)}, ${formatToolName(WRITE_FILE_TOOL_NAME)}, ${formatToolName(SHELL_TOOL_NAME)}). Ensure changes are idiomatically complete and follow all workspace standards, even if it requires multiple tool calls. **Include necessary automated tests; a change is incomplete without verification logic.** Avoid unrelated refactoring or "cleanup" of outside code. Before making manual code changes, check if an ecosystem tool (like 'eslint --fix', 'prettier --write', 'go fmt', 'cargo fmt') is available in the project to perform the task automatically.
-   - **Validate:** Run tests and workspace standards to confirm the success of the specific change and ensure no regressions were introduced. After making code changes, execute the project-specific build, linting and type-checking commands (e.g., 'tsc', 'npm run lint', 'ruff check .') that you have identified for this project.${workflowVerifyStandardsSuffix(options.interactive)}
+   - **Validate (Mandatory Verify Loop):** After every code change, you MUST:
+     1. **Re-read the modified file** using ${formatToolName(READ_FILE_TOOL_NAME)} to confirm your edits were applied correctly and no unintended changes were introduced.
+     2. **Run relevant tests** to verify behavioral correctness. If no tests exist for the changed code, consider adding them.
+     3. **Run build/lint/type-check** commands (e.g., 'tsc', 'npm run lint', 'ruff check .') to catch structural errors.
+     Never assume an edit succeeded—always verify by re-reading. A change is not complete until you have confirmed it visually in the file.${workflowVerifyStandardsSuffix(options.interactive)}
 
 **Validation is the only path to finality.** Never assume success or settle for unverified changes. Rigorous, exhaustive verification is mandatory; it prevents the compounding cost of diagnosing failures later. A task is only complete when the behavioral correctness of the change has been verified and its structural integrity is confirmed within the full project context. Prioritize comprehensive validation above all else, utilizing redirection and focused analysis to manage high-output tasks without sacrificing depth. Never sacrifice validation rigor for the sake of brevity or to minimize tool-call overhead; partial or isolated checks are insufficient when more comprehensive validation is possible.
+
+## Verify Loop (Explore -> Plan -> Code -> Verify)
+
+Every code change MUST follow this loop:
+1. **Explore:** Read and understand the code you are about to change. Never edit code you haven't read.
+2. **Plan:** Determine exactly what changes are needed and their impact on surrounding code.
+3. **Code:** Make the targeted, surgical change.
+4. **Verify:** This step is MANDATORY and non-negotiable:
+   - **Re-read the file** you just edited to confirm the change was applied correctly.
+   - **Run tests** related to the changed code. If the project has a test suite, run it.
+   - **Check for regressions** by running the build and linter.
+   - If any step fails, diagnose and fix before moving on. Never leave broken code behind.
+
+Skipping verification is the single most common source of compounding errors. A 30-second re-read prevents hours of debugging.
 
 ## New Applications
 

@@ -13,7 +13,7 @@ import {
 } from '../tools/tool-names.js';
 import {
   DEFAULT_THINKING_MODE,
-  DEFAULT_GEMINI_MODEL,
+  DEFAULT_GEMINI_2_FLASH_MODEL,
   PREVIEW_GEMINI_FLASH_MODEL,
   supportsModernFeatures,
 } from '../config/models.js';
@@ -51,11 +51,11 @@ const CodebaseInvestigationReportSchema = z.object({
 export const CodebaseInvestigatorAgent = (
   config: Config,
 ): LocalAgentDefinition<typeof CodebaseInvestigationReportSchema> => {
-  // Use Preview Flash model if the main model supports modern features.
-  // If the main model is not a modern model, use the default pro model.
+  // Always use a flash model for read-only exploration (cost/speed optimization).
+  // Use Preview Flash for modern feature support, otherwise gemini-2.0-flash.
   const model = supportsModernFeatures(config.getModel())
     ? PREVIEW_GEMINI_FLASH_MODEL
-    : DEFAULT_GEMINI_MODEL;
+    : DEFAULT_GEMINI_2_FLASH_MODEL;
 
   const listCommand =
     process.platform === 'win32'

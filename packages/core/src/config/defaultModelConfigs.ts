@@ -140,6 +140,16 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
         },
       },
     },
+    'codebase-investigator': {
+      extends: 'base',
+      modelConfig: {
+        model: 'gemini-2.0-flash',
+        generateContentConfig: {
+          temperature: 0.1,
+          topP: 0.95,
+        },
+      },
+    },
     'edit-corrector': {
       extends: 'base',
       modelConfig: {
