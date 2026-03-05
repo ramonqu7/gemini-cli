@@ -216,3 +216,7 @@ export * from './utils/terminal.js';
 
 // Export types from @google/genai
 export type { Content, Part, FunctionCall } from '@google/genai';
+export * from './services/autoMemoryService.js';
+export * from './services/compactInstructionsService.js';
+export * from './services/memoryImportService.js';
+export * from './services/promptCachingService.js';

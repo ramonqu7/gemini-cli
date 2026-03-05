@@ -224,14 +224,14 @@ export class PromptProvider {
     return sanitizedPrompt;
   }
 
-  getCompressionPrompt(config: Config): string {
+  getCompressionPrompt(config: Config, customInstructions?: string): string {
     const desiredModel = resolveModel(
       config.getActiveModel(),
       config.getGemini31LaunchedSync?.() ?? false,
     );
     const isModernModel = supportsModernFeatures(desiredModel);
     const activeSnippets = isModernModel ? snippets : legacySnippets;
-    return activeSnippets.getCompressionPrompt();
+    return activeSnippets.getCompressionPrompt(customInstructions);
   }
 
   private withSection<T>(

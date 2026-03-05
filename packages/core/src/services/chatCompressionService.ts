@@ -32,6 +32,7 @@ import {
   PREVIEW_GEMINI_3_1_MODEL,
 } from '../config/models.js';
 import { PreCompressTrigger } from '../hooks/types.js';
+import { getEffectiveCompactInstructions } from './compactInstructionsService.js';
 
 /**
  * Default threshold for compression token count as a fraction of the model's
@@ -237,6 +238,7 @@ export class ChatCompressionService {
     config: Config,
     hasFailedCompressionAttempt: boolean,
     abortSignal?: AbortSignal,
+    userCompactInstructions?: string,
   ): Promise<{ newHistory: Content[] | null; info: ChatCompressionInfo }> {
     const curatedHistory = chat.getHistory(true);
 
@@ -363,7 +365,12 @@ export class ChatCompressionService {
           ],
         },
       ],
-      systemInstruction: { text: getCompressionPrompt(config) },
+      systemInstruction: {
+        text: getCompressionPrompt(
+          config,
+          await getEffectiveCompactInstructions(userCompactInstructions),
+        ),
+      },
       promptId,
       // TODO(joshualitt): wire up a sensible abort signal,
       abortSignal: abortSignal ?? new AbortController().signal,
@@ -392,7 +399,12 @@ export class ChatCompressionService {
             ],
           },
         ],
-        systemInstruction: { text: getCompressionPrompt(config) },
+        systemInstruction: {
+          text: getCompressionPrompt(
+            config,
+            await getEffectiveCompactInstructions(userCompactInstructions),
+          ),
+        },
         promptId: `${promptId}-verify`,
         role: LlmRole.UTILITY_COMPRESSOR,
         abortSignal: abortSignal ?? new AbortController().signal,

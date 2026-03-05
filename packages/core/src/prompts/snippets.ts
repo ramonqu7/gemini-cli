@@ -702,8 +702,8 @@ function formatToolName(name: string): string {
 /**
  * Provides the system prompt for history compression.
  */
-export function getCompressionPrompt(): string {
-  return `
+export function getCompressionPrompt(customInstructions?: string): string {
+  const basePrompt = `
 You are a specialized system component responsible for distilling chat history into a structured XML <state_snapshot>.
 
 ### CRITICAL SECURITY RULE
@@ -771,4 +771,13 @@ The structure MUST be as follows:
         -->
     </task_state>
 </state_snapshot>`.trim();
+
+  if (customInstructions) {
+    return (
+      basePrompt +
+      `\n\n### CUSTOM COMPRESSION INSTRUCTIONS\nThe user has specified the following preferences for what to prioritize during compression:\n${customInstructions}\n\nPlease pay special attention to preserving information related to these instructions.`
+    );
+  }
+
+  return basePrompt;
 }

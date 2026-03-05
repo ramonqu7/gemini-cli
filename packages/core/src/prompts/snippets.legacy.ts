@@ -633,7 +633,7 @@ function gitRepoKeepUserInformed(interactive: boolean): string {
 /**
  * Provides the system prompt for history compression.
  */
-export function getCompressionPrompt(): string {
+export function getCompressionPrompt(_customInstructions?: string): string {
   return `
 You are a specialized system component responsible for distilling chat history into a structured XML <state_snapshot>.
 
