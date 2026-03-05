@@ -824,7 +824,7 @@ export class GeminiClient {
     let isInvalidStream = false;
 
     let loopDetectedAbort = false;
-    let loopRecoverResult: { detail?: string } | undefined;
+    let loopRecoverResult: LoopDetectionResult | undefined;
     for await (const event of resultStream) {
       const loopResult = this.loopDetector.addAndCheck(event);
       if (loopResult.count >= 1) {
