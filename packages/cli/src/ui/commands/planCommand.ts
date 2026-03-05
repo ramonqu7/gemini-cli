@@ -84,14 +84,36 @@ async function approveAction(context: CommandContext) {
     return;
   }
 
-  // Refresh system prompt to inject step execution context
-  config.getGeminiClient()?.updateSystemInstruction();
+  // Clear context for fresh execution — the planning phase consumed tokens
+  // on exploration and discussion. Execution starts fresh with only the plan
+  // injected into the system prompt.
+  const geminiClient = config.getGeminiClient();
+  if (geminiClient) {
+    coreEvents.emitFeedback(
+      'info',
+      'Plan approved. Clearing context for fresh execution...',
+    );
+    await geminiClient.resetChat();
+    context.ui.clear();
+  }
 
-  coreEvents.emitFeedback('info', 'Plan approved. Beginning step-by-step execution.');
+  // Switch out of plan mode into auto_edit for execution
+  config.setApprovalMode(ApprovalMode.AUTO_EDIT);
+
+  // Refresh system prompt — the plan step prompt will be injected
+  // via promptProvider since planExec.isExecuting() is now true
+  geminiClient?.updateSystemInstruction();
+
+  coreEvents.emitFeedback(
+    'info',
+    'Context cleared. Executing plan step-by-step in Auto-Edit mode.',
+  );
   context.ui.addItem({
     type: MessageType.GEMINI,
     text: planExec.formatPlan(),
   });
+
+  // Step prompt is injected into system instruction. User types "go" to start.
 }
 
 /**
