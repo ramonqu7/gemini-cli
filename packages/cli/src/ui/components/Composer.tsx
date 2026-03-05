@@ -70,10 +70,8 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
   const showTips = loadingPhrases === 'tips' || loadingPhrases === 'all';
   const showWit = loadingPhrases === 'witty' || loadingPhrases === 'all';
 
-  // For this PR we are hardcoding the new experimental layout as the default.
-  // We allow a hidden setting to override it specifically for existing tests.
-  const isExperimentalLayout =
-    (settings.merged.ui as Record<string, unknown>)['useLegacyLayout'] !== true;
+  // For this PR we are gating the new experimental layout behind footerLayoutRefresh.
+  const isExperimentalLayout = settings.merged.ui.footerLayoutRefresh === true;
   const showUiDetails = uiState.cleanUiDetailsVisible;
   const suggestionsPosition = isAlternateBuffer ? 'above' : 'below';
   const hideContextSummary =
@@ -267,7 +265,7 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
     // Try Tip first
     if (showTips && uiState.currentTip) {
       if (
-        estimatedStatusLength + uiState.currentTip.length + 5 <=
+        estimatedStatusLength + uiState.currentTip.length + 10 <=
         terminalWidth
       ) {
         return uiState.currentTip;
@@ -330,7 +328,9 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
           wrap="truncate-end"
           italic={ambientText === uiState.currentWittyPhrase}
         >
-          {ambientText}
+          {ambientText === uiState.currentTip
+            ? `Tip: ${ambientText}`
+            : ambientText}
         </Text>
       </Box>
     );
@@ -377,7 +377,7 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
               : undefined
           }
           elapsedTime={uiState.elapsedTime}
-          forceRealStatusOnly={isExperimentalLayout}
+          forceRealStatusOnly={false}
           showCancelAndTimer={!isExperimentalLayout}
           wittyPhrase={uiState.currentWittyPhrase}
         />
@@ -390,139 +390,137 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
   };
 
   const statusNode = renderStatusNode();
-  const hasStatusMessage = Boolean(statusNode) || hasToast;
+  // const hasStatusMessage = Boolean(statusNode) || hasToast;
 
   const renderExperimentalStatusNode = () => {
     if (!showUiDetails && !showMinimalMetaRow) return null;
 
     return (
-      <Box width="100%" flexDirection="column">
-        {!showUiDetails && showMinimalMetaRow && (
-          <Box
-            width="100%"
-            flexDirection="row"
-            justifyContent="space-between"
-            alignItems="center"
-          >
-            <Box flexDirection="row">
-              {showMinimalInlineLoading && (
-                <LoadingIndicator
-                  inline
-                  loadingPhrases={loadingPhrases}
-                  errorVerbosity={settings.merged.ui.errorVerbosity}
-                  elapsedTime={uiState.elapsedTime}
-                  forceRealStatusOnly={true}
-                  showCancelAndTimer={false}
-                />
-              )}
-              {hasUserHooks && (
-                <Box marginLeft={showMinimalInlineLoading ? 1 : 0}>
-                  <Box marginRight={1}>
-                    <GeminiRespondingSpinner isHookActive={true} />
-                  </Box>
-                  <Text color={theme.text.primary} italic>
-                    <HookStatusDisplay activeHooks={userHooks} />
-                  </Text>
-                </Box>
-              )}
-              {showMinimalBleedThroughRow && (
-                <Box
-                  marginLeft={showMinimalInlineLoading || hasUserHooks ? 1 : 0}
-                >
-                  {showMinimalModeBleedThrough && minimalModeBleedThrough && (
-                    <Text color={minimalModeBleedThrough.color}>
-                      ● {minimalModeBleedThrough.text}
-                    </Text>
-                  )}
-                  {hasMinimalStatusBleedThrough && (
-                    <Box
-                      marginLeft={
-                        showMinimalInlineLoading ||
-                        showMinimalModeBleedThrough ||
-                        hasUserHooks
-                          ? 1
-                          : 0
-                      }
-                    >
-                      <ToastDisplay />
-                    </Box>
-                  )}
-                  {showMinimalContextBleedThrough && (
-                    <Box
-                      marginLeft={
-                        showMinimalInlineLoading ||
-                        showMinimalModeBleedThrough ||
-                        hasMinimalStatusBleedThrough ||
-                        hasUserHooks
-                          ? 1
-                          : 0
-                      }
-                    >
-                      <ContextUsageDisplay
-                        promptTokenCount={
-                          uiState.sessionStats.lastPromptTokenCount
-                        }
-                        model={uiState.currentModel}
-                        terminalWidth={uiState.terminalWidth}
-                      />
-                    </Box>
-                  )}
-                </Box>
-              )}
-            </Box>
-            {showShortcutsHint && (
-              <Box marginLeft={1}>
-                <ShortcutsHint />
-              </Box>
-            )}
-          </Box>
-        )}
-
-        {showUiDetails && (
+      <Box
+        flexDirection="column"
+        width="100%"
+        borderStyle="bold"
+        borderTop
+        borderBottom={false}
+        borderLeft={false}
+        borderRight={false}
+        borderColor={theme.border.default}
+        borderDimColor={true}
+      >
+        {/* Row 1: multipurpose status (thinking, hooks, wit, tips) */}
+        {((!showUiDetails && showMinimalMetaRow) ||
+          (showUiDetails && true)) && (
           <Box
             width="100%"
             flexDirection="row"
             alignItems="center"
             justifyContent="space-between"
           >
+            {/* Left side: Toasts, Hooks, Thinking, Wit */}
             <Box flexDirection="row" flexGrow={1} flexShrink={1}>
-              {hasToast ? (
-                <Box width="100%" marginLeft={1}>
-                  {isInteractiveShellWaiting && !shouldShowToast(uiState) ? (
-                    <Text color={theme.status.warning}>
-                      ! Shell awaiting input (Tab to focus)
-                    </Text>
-                  ) : (
-                    <ToastDisplay />
+              {!showUiDetails && showMinimalMetaRow ? (
+                <Box flexDirection="row">
+                  {showMinimalInlineLoading && (
+                    <LoadingIndicator
+                      inline
+                      loadingPhrases={loadingPhrases}
+                      errorVerbosity={settings.merged.ui.errorVerbosity}
+                      elapsedTime={uiState.elapsedTime}
+                      forceRealStatusOnly={true}
+                      showCancelAndTimer={false}
+                    />
+                  )}
+                  {hasUserHooks && (
+                    <Box marginLeft={showMinimalInlineLoading ? 1 : 0}>
+                      <Box marginRight={1}>
+                        <GeminiRespondingSpinner isHookActive={true} />
+                      </Box>
+                      <Text color={theme.text.primary} italic>
+                        <HookStatusDisplay activeHooks={userHooks} />
+                      </Text>
+                    </Box>
+                  )}
+                  {showMinimalBleedThroughRow && (
+                    <Box
+                      marginLeft={
+                        showMinimalInlineLoading || hasUserHooks ? 1 : 0
+                      }
+                    >
+                      {showMinimalModeBleedThrough &&
+                        minimalModeBleedThrough && (
+                          <Text color={minimalModeBleedThrough.color}>
+                            ● {minimalModeBleedThrough.text}
+                          </Text>
+                        )}
+                      {hasMinimalStatusBleedThrough && (
+                        <Box
+                          marginLeft={
+                            showMinimalInlineLoading ||
+                            showMinimalModeBleedThrough ||
+                            hasUserHooks
+                              ? 1
+                              : 0
+                          }
+                        >
+                          <ToastDisplay />
+                        </Box>
+                      )}
+                    </Box>
                   )}
                 </Box>
               ) : (
-                <Box
-                  flexDirection="row"
-                  alignItems={isNarrow ? 'flex-start' : 'center'}
-                  flexGrow={1}
-                  flexShrink={0}
-                  marginLeft={1}
-                >
-                  {statusNode}
+                <Box flexDirection="row" flexGrow={1} flexShrink={1}>
+                  {hasToast ? (
+                    <Box width="100%" marginLeft={1}>
+                      {isInteractiveShellWaiting &&
+                      !shouldShowToast(uiState) ? (
+                        <Text color={theme.status.warning}>
+                          ! Shell awaiting input (Tab to focus)
+                        </Text>
+                      ) : (
+                        <ToastDisplay />
+                      )}
+                    </Box>
+                  ) : (
+                    <Box
+                      flexDirection="row"
+                      alignItems={isNarrow ? 'flex-start' : 'center'}
+                      flexGrow={1}
+                      flexShrink={0}
+                      marginLeft={1}
+                    >
+                      {statusNode}
+                    </Box>
+                  )}
                 </Box>
               )}
             </Box>
 
-            {!hasToast && (
-              <Box flexShrink={0} marginLeft={2}>
-                {renderAmbientNode()}
-              </Box>
-            )}
+            {/* Right side: Tips or Shortcut Hint */}
+            <Box flexShrink={0} marginLeft={2}>
+              {!showUiDetails && showShortcutsHint ? (
+                <ShortcutsHint />
+              ) : (
+                !hasToast && renderAmbientNode()
+              )}
+            </Box>
           </Box>
         )}
 
+        {/* Row 2: Mode and Context Summary */}
         {showUiDetails && (
           <Box
             width="100%"
             flexDirection={isNarrow ? 'column' : 'row'}
             alignItems={isNarrow ? 'flex-start' : 'center'}
             justifyContent="space-between"
+            borderStyle="single"
+            borderTop
+            borderBottom={false}
+            borderLeft={false}
+            borderRight={false}
+            borderColor={theme.border.default}
+            borderDimColor={true}
           >
             <Box flexDirection="row" alignItems="center" marginLeft={1}>
               {showApprovalIndicator && (
@@ -593,8 +591,9 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
 
       {showUiDetails && <TodoTray />}
 
+      {showShortcutsHelp && <ShortcutsHelp />}
+
       <Box width="100%" flexDirection="column">
-        {showUiDetails && hasStatusMessage && <HorizontalLine />}
         {isExperimentalLayout ? (
           renderExperimentalStatusNode()
         ) : (
@@ -623,6 +622,7 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
                     }
                     elapsedTime={uiState.elapsedTime}
                     forceRealStatusOnly={false}
+                    wittyPhrase={uiState.currentWittyPhrase}
                   />
                 )}
               </Box>
@@ -630,10 +630,12 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
                 marginTop={isNarrow ? 1 : 0}
                 flexDirection="column"
                 alignItems={isNarrow ? 'flex-start' : 'flex-end'}
+                marginRight={1}
               >
                 {showUiDetails && showShortcutsHint && <ShortcutsHint />}
               </Box>
             </Box>
+            {showUiDetails && <HorizontalLine />}
             {showMinimalMetaRow && (
               <Box
                 justifyContent="space-between"
@@ -671,11 +673,7 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
                   {showMinimalBleedThroughRow && (
                     <Box
                       marginLeft={
-                        showMinimalInlineLoading ||
-                        showMinimalModeBleedThrough ||
-                        hasUserHooks
-                          ? 1
-                          : 0
+                        showMinimalInlineLoading || hasUserHooks ? 1 : 0
                       }
                     >
                       {showMinimalModeBleedThrough &&
@@ -731,13 +729,13 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
                 )}
               </Box>
             )}
-            {showShortcutsHelp && <ShortcutsHelp />}
             {showUiDetails && (
               <Box
                 width="100%"
                 flexDirection="row"
                 flexWrap="wrap"
                 alignItems="center"
+                justifyContent="space-between"
                 marginLeft={1}
               >
                 {hasToast ? (
@@ -748,6 +746,7 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
                       flexDirection="row"
                       alignItems="center"
                       flexWrap="wrap"
+                      flexGrow={1}
                     >
                       {showApprovalIndicator && (
                         <ApprovalModeIndicator
@@ -771,14 +770,11 @@ export const Composer: React.FC<ComposerProps> = ({ isFocused }) => {
                       )}
                     </Box>
                     {!showLoadingIndicator && !hasUserHooks && (
-                      <>
-                        <Box marginLeft={1}>
-                          <Text color={theme.text.secondary}>·</Text>
-                        </Box>
+                      <Box marginRight={1}>
                         <StatusDisplay
                           hideContextSummary={hideContextSummary}
                         />
-                      </>
+                      </Box>
                     )}
                   </>
                 )}

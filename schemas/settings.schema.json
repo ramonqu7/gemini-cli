@@ -366,6 +366,13 @@
           "default": true,
           "type": "boolean"
         },
+        "footerLayoutRefresh": {
+          "title": "Footer Layout Refresh",
+          "description": "Enable the refreshed UX layout for the status bar and footer.",
+          "markdownDescription": "Enable the refreshed UX layout for the status bar and footer.\n\n- Category: `UI`\n- Requires restart: `no`\n- Default: `false`",
+          "default": false,
+          "type": "boolean"
+        },
         "newFooterLayout": {
           "title": "New Footer Layout",
           "description": "Use the new 2-row layout with inline tips.",

@@ -78,6 +78,146 @@ export const Footer: React.FC = () => {
 
   const showDebugProfiler = debugMode || isDevelopment;
 
+  if (settings.merged.ui.footerLayoutRefresh) {
+    return (
+      <Box
+        width={terminalWidth}
+        height={2}
+        flexShrink={0}
+        flexDirection="row"
+        justifyContent="space-between"
+        paddingX={1}
+        paddingTop={0}
+        paddingBottom={0}
+      >
+        <Box flexDirection="column" flexShrink={1} paddingRight={2}>
+          <Text color={theme.text.secondary} wrap="truncate-end">
+            /directory
+          </Text>
+          <Box flexDirection="row" alignItems="center">
+            <Text color={theme.text.primary} wrap="truncate-end">
+              {displayVimMode && (
+                <Text color={theme.text.secondary}>[{displayVimMode}] </Text>
+              )}
+              {displayPath}
+              {debugMode && (
+                <Text color={theme.status.error}>
+                  {' '}
+                  {' ' + (debugMessage || '--debug')}
+                </Text>
+              )}
+            </Text>
+            {showDebugProfiler && (
+              <Box marginLeft={1} flexShrink={0}>
+                <DebugProfiler />
+              </Box>
+            )}
+          </Box>
+        </Box>
+
+        {branchName && (
+          <Box flexDirection="column" flexShrink={0} paddingRight={2}>
+            <Text color={theme.text.secondary} wrap="truncate-end">
+              branch
+            </Text>
+            <Text color={theme.text.primary} wrap="truncate-end">
+              {branchName}
+            </Text>
+          </Box>
+        )}
+
+        {!hideSandboxStatus && (
+          <Box flexDirection="column" flexShrink={0} paddingRight={2}>
+            <Text color={theme.text.secondary} wrap="truncate-end">
+              sandbox
+            </Text>
+            {isTrustedFolder === false ? (
+              <Text color={theme.status.warning} wrap="truncate-end">
+                untrusted
+              </Text>
+            ) : process.env['SANDBOX'] &&
+              process.env['SANDBOX'] !== 'sandbox-exec' ? (
+              <Text color="green" wrap="truncate-end">
+                {process.env['SANDBOX'].replace(/^gemini-(?:cli-)?/, '')}
+              </Text>
+            ) : process.env['SANDBOX'] === 'sandbox-exec' ? (
+              <Text color={theme.status.warning} wrap="truncate-end">
+                macOS Seatbelt
+              </Text>
+            ) : (
+              <Text color={theme.status.error} wrap="truncate-end">
+                no sandbox
+              </Text>
+            )}
+          </Box>
+        )}
+
+        {!hideModelInfo && (
+          <Box flexDirection="column" flexShrink={0} paddingRight={2}>
+            <Text color={theme.text.secondary} wrap="truncate-end">
+              /model
+            </Text>
+            <Box flexDirection="row" alignItems="center">
+              <Text color={theme.text.primary} wrap="truncate-end">
+                {getDisplayString(model)}
+              </Text>
+              {corgiMode && <Text color={theme.status.error}> ▼(´ᴥ`)▼</Text>}
+            </Box>
+          </Box>
+        )}
+
+        {!hideModelInfo && !hideContextPercentage && (
+          <Box
+            flexDirection="column"
+            flexShrink={0}
+            paddingRight={showMemoryUsage || showErrorSummary ? 2 : 0}
+          >
+            <Text color={theme.text.secondary} wrap="truncate-end">
+              context
+            </Text>
+            <Box flexDirection="row">
+              <ContextUsageDisplay
+                promptTokenCount={promptTokenCount}
+                model={model}
+                terminalWidth={terminalWidth}
+              />
+              {quotaStats && (
+                <Text wrap="truncate-end">
+                  {' '}
+                  <QuotaDisplay
+                    remaining={quotaStats.remaining}
+                    limit={quotaStats.limit}
+                    resetTime={quotaStats.resetTime}
+                    terse={true}
+                  />
+                </Text>
+              )}
+            </Box>
+          </Box>
+        )}
+
+        {(showMemoryUsage || showErrorSummary) && (
+          <Box flexDirection="column" flexShrink={0}>
+            <Text color={theme.text.secondary} wrap="truncate-end">
+              session info
+            </Text>
+            <Box flexDirection="row">
+              {showMemoryUsage && <MemoryUsageDisplay />}
+              {showMemoryUsage && showErrorSummary && (
+                <Text color={theme.text.secondary}> · </Text>
+              )}
+              {showErrorSummary && (
+                <Box paddingLeft={0} flexShrink={0}>
+                  <ConsoleSummaryDisplay errorCount={errorCount} />
+                </Box>
+              )}
+            </Box>
+          </Box>
+        )}
+      </Box>
+    );
+  }
+
   return (
     <Box
       justifyContent={justifyContent}
@@ -172,7 +312,12 @@ export const Footer: React.FC = () => {
                 </>
               )}
             </Text>
-            {showMemoryUsage && <MemoryUsageDisplay />}
+            {showMemoryUsage && (
+              <Box flexDirection="row">
+                <Text color={theme.ui.comment}> | </Text>
+                <MemoryUsageDisplay />
+              </Box>
+            )}
           </Box>
           <Box alignItems="center">
             {corgiMode && (

@@ -613,6 +613,16 @@ const SETTINGS_SCHEMA = {
         description: 'Hide the footer from the UI',
         showInDialog: true,
       },
+      footerLayoutRefresh: {
+        type: 'boolean',
+        label: 'Footer Layout Refresh',
+        category: 'UI',
+        requiresRestart: false,
+        default: false,
+        description:
+          'Enable the refreshed UX layout for the status bar and footer.',
+        showInDialog: true,
+      },
       showMemoryUsage: {
         type: 'boolean',
         label: 'Show Memory Usage',
