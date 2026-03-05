@@ -8,6 +8,7 @@ import type { Part, Content } from '@google/genai';
 import type { Config } from '../config/config.js';
 import { getFolderStructure } from './getFolderStructure.js';
 import { loadAutoMemories } from '../services/autoMemoryService.js';
+import { KnowledgeBaseService } from '../services/knowledgeBaseService.js';
 
 export const INITIAL_HISTORY_LENGTH = 1;
 
@@ -65,6 +66,16 @@ export async function getEnvironmentContext(config: Config): Promise<Part[]> {
     ? `\n<auto_memories>\nThese are things you learned from previous sessions with this user. Respect these preferences and facts:\n${autoMemories}\n</auto_memories>`
     : '';
 
+  // Load persistent knowledge base context (user profile, project patterns, corrections)
+  const knowledgeBase = new KnowledgeBaseService();
+  const knowledgeContext = await knowledgeBase
+    .formatKnowledgeContext(config.getWorkingDir())
+    .catch(() => '');
+
+  const knowledgeSection = knowledgeContext
+    ? `\n${knowledgeContext}`
+    : '';
+
   const context = `
 <session_context>
 This is the Gemini CLI. We are setting up the context for our chat.
@@ -73,7 +84,7 @@ My operating system is: ${platform}
 The project's temporary directory is: ${tempDir}
 ${directoryContext}
 
-${environmentMemory}${autoMemorySection}
+${environmentMemory}${autoMemorySection}${knowledgeSection}
 </session_context>`.trim();
 
   const initialParts: Part[] = [{ text: context }];

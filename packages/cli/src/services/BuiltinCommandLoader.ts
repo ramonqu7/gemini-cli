@@ -33,6 +33,7 @@ import { docsCommand } from '../ui/commands/docsCommand.js';
 import { directoryCommand } from '../ui/commands/directoryCommand.js';
 import { editorCommand } from '../ui/commands/editorCommand.js';
 import { extensionsCommand } from '../ui/commands/extensionsCommand.js';
+import { fastCommand } from '../ui/commands/fastCommand.js';
 import { footerCommand } from '../ui/commands/footerCommand.js';
 import { helpCommand } from '../ui/commands/helpCommand.js';
 import { shortcutsCommand } from '../ui/commands/shortcutsCommand.js';
@@ -61,6 +62,8 @@ import { shellsCommand } from '../ui/commands/shellsCommand.js';
 import { vimCommand } from '../ui/commands/vimCommand.js';
 import { setupGithubCommand } from '../ui/commands/setupGithubCommand.js';
 import { terminalSetupCommand } from '../ui/commands/terminalSetupCommand.js';
+import { exportCommand } from '../ui/commands/exportCommand.js';
+import { historyCommand } from '../ui/commands/historyCommand.js';
 
 /**
  * Loads the core, hard-coded slash commands that are an integral part
@@ -102,6 +105,8 @@ export class BuiltinCommandLoader implements ICommandLoader {
       docsCommand,
       directoryCommand,
       editorCommand,
+      exportCommand,
+      fastCommand,
       ...(this.config?.getExtensionsEnabled() === false
         ? [
             {
@@ -125,6 +130,7 @@ export class BuiltinCommandLoader implements ICommandLoader {
         : [extensionsCommand(this.config?.getEnableExtensionReloading())]),
       helpCommand,
       footerCommand,
+      historyCommand,
       shortcutsCommand,
       ...(this.config?.getEnableHooksUI() ? [hooksCommand] : []),
       rewindCommand,

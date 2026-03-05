@@ -5,6 +5,7 @@
  */
 
 import { EventEmitter } from 'node:events';
+import { notifyTaskComplete } from './notificationService.js';
 
 /**
  * Represents the status of a background task.
@@ -58,6 +59,16 @@ const MAX_CONCURRENT_TASKS = 3;
 export class BackgroundTaskService extends EventEmitter<BackgroundTaskEvents> {
   private tasks: Map<string, BackgroundTask> = new Map();
   private nextTaskId = 1;
+  private desktopNotificationsEnabled = false;
+
+  /**
+   * Enables or disables desktop notifications for task completion.
+   * When enabled, an OS-level notification is sent for tasks that
+   * took longer than 30 seconds.
+   */
+  setDesktopNotifications(enabled: boolean): void {
+    this.desktopNotificationsEnabled = enabled;
+  }
 
   /**
    * Creates a new background task entry and returns its ID.
@@ -99,6 +110,16 @@ export class BackgroundTaskService extends EventEmitter<BackgroundTaskEvents> {
     task.endTime = Date.now();
     task.result = result;
     this.emit('task-completed', task);
+
+    // Fire-and-forget desktop notification for long-running tasks (>30s).
+    const durationMs = task.endTime - task.startTime;
+    if (this.desktopNotificationsEnabled && durationMs > 30_000) {
+      const descPreview =
+        task.description.length > 60
+          ? task.description.substring(0, 57) + '...'
+          : task.description;
+      notifyTaskComplete(descPreview, durationMs);
+    }
   }
 
   /**

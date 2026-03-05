@@ -1309,6 +1309,15 @@ export const useGeminiStream = (
           case ServerGeminiEventType.InvalidStream:
             // Will add the missing logic later
             break;
+          case ServerGeminiEventType.AutoCompactSuggestion:
+            addItem(
+              {
+                type: MessageType.WARNING,
+                text: event.value.message,
+              },
+              userMessageTimestamp,
+            );
+            break;
           default: {
             // enforces exhaustive switch-case
             const unreachable: never = event;

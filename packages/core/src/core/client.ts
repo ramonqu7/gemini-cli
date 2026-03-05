@@ -80,6 +80,11 @@ import { PrefetchService } from '../services/prefetchService.js';
 import { prefetchServiceInstance } from '../services/prefetchServiceInstance.js';
 import { SmartContextService } from '../services/smartContextService.js';
 import { StreamingToolPipelineService } from '../services/streamingToolPipelineService.js';
+import {
+  AutoCompactService,
+  AutoCompactAction,
+} from '../services/autoCompactService.js';
+import { CommandHistoryService } from '../services/commandHistoryService.js';
 
 const MAX_TURNS = 100;
 
@@ -106,6 +111,8 @@ export class GeminiClient {
   private readonly prefetchService: PrefetchService;
   private readonly smartContextService: SmartContextService;
   private readonly streamingToolPipeline: StreamingToolPipelineService;
+  private readonly autoCompactService: AutoCompactService;
+  private readonly commandHistoryService: CommandHistoryService;
   private lastPromptId: string;
   private currentSequenceModel: string | null = null;
   private lastSentIdeContext: IdeContext | undefined;
@@ -125,6 +132,8 @@ export class GeminiClient {
     this.smartContextService = new SmartContextService();
     this.prefetchService = new PrefetchService(this.smartContextService);
     this.streamingToolPipeline = new StreamingToolPipelineService(this.config);
+    this.autoCompactService = new AutoCompactService();
+    this.commandHistoryService = new CommandHistoryService();
     this.lastPromptId = this.config.getSessionId();
 
     // Register the prefetch service singleton so tools can access it.
@@ -639,6 +648,33 @@ export class GeminiClient {
 
     if (compressed.compressionStatus === CompressionStatus.COMPRESSED) {
       yield { type: GeminiEventType.ChatCompressed, value: compressed };
+      // Reset auto-compact thresholds after successful compression
+      this.autoCompactService.reset();
+    }
+
+    // Proactive auto-compact: evaluate context utilization
+    const autoCompactResult = this.autoCompactService.evaluate(
+      this.getChat().getLastPromptTokenCount(),
+      modelForLimitCheck,
+    );
+
+    if (autoCompactResult.action === AutoCompactAction.AUTO_COMPACT) {
+      const autoCompressed = await this.tryCompressChat(prompt_id, true);
+      if (autoCompressed.compressionStatus === CompressionStatus.COMPRESSED) {
+        yield { type: GeminiEventType.ChatCompressed, value: autoCompressed };
+        this.autoCompactService.reset();
+      }
+    } else if (
+      autoCompactResult.action === AutoCompactAction.SUGGEST &&
+      autoCompactResult.message
+    ) {
+      yield {
+        type: GeminiEventType.AutoCompactSuggestion,
+        value: {
+          message: autoCompactResult.message,
+          utilization: autoCompactResult.utilization,
+        },
+      };
     }
 
     const remainingTokenCount =
@@ -934,6 +970,19 @@ export class GeminiClient {
       this.hookStateMap.delete(this.lastPromptId);
       this.lastPromptId = prompt_id;
       this.currentSequenceModel = null;
+
+      // Record user prompt in persistent command history
+      const promptTextForHistory = partListUnionToString(request);
+      if (promptTextForHistory.trim()) {
+        try {
+          this.commandHistoryService.addEntry(
+            promptTextForHistory,
+            this._getActiveModelForCurrentTurn(),
+          );
+        } catch {
+          // Non-critical — don't block the request
+        }
+      }
 
       // Fire-and-forget: speculatively pre-fetch files the model is
       // likely to request based on the user's prompt.

@@ -69,6 +69,7 @@ export enum GeminiEventType {
   ModelInfo = 'model_info',
   AgentExecutionStopped = 'agent_execution_stopped',
   AgentExecutionBlocked = 'agent_execution_blocked',
+  AutoCompactSuggestion = 'auto_compact_suggestion',
 }
 
 export type ServerGeminiRetryEvent = {
@@ -214,6 +215,11 @@ export type ServerGeminiCitationEvent = {
   value: string;
 };
 
+export type ServerGeminiAutoCompactSuggestionEvent = {
+  type: GeminiEventType.AutoCompactSuggestion;
+  value: { message: string; utilization: number };
+};
+
 // The original union type, now composed of the individual types
 export type ServerGeminiStreamEvent =
   | ServerGeminiChatCompressedEvent
@@ -233,7 +239,8 @@ export type ServerGeminiStreamEvent =
   | ServerGeminiInvalidStreamEvent
   | ServerGeminiModelInfoEvent
   | ServerGeminiAgentExecutionStoppedEvent
-  | ServerGeminiAgentExecutionBlockedEvent;
+  | ServerGeminiAgentExecutionBlockedEvent
+  | ServerGeminiAutoCompactSuggestionEvent;
 
 // A turn manages the agentic loop turn within the server context.
 export class Turn {
