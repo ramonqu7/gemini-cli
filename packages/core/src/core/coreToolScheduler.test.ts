@@ -290,6 +290,12 @@ function createMockConfig(overrides: Partial<Config> = {}): Config {
 
   const finalConfig = { ...baseConfig, ...overrides } as Config;
 
+  Object.defineProperty(finalConfig, 'config', {
+    get: () => finalConfig,
+    enumerable: true,
+    configurable: true,
+  });
+
   // Patch the policy engine to use the final config if not overridden
   if (!overrides.getPolicyEngine) {
     finalConfig.getPolicyEngine = () =>

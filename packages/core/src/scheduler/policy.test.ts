@@ -47,7 +47,14 @@ describe('policy.ts', () => {
 
       const mockConfig = {
         getPolicyEngine: vi.fn().mockReturnValue(mockPolicyEngine),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
 
       const toolCall = {
         request: { name: 'test-tool', args: {} },
@@ -70,7 +77,14 @@ describe('policy.ts', () => {
 
       const mockConfig = {
         getPolicyEngine: vi.fn().mockReturnValue(mockPolicyEngine),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
 
       const mcpTool = Object.create(DiscoveredMCPTool.prototype);
       mcpTool.serverName = 'my-server';
@@ -97,7 +111,14 @@ describe('policy.ts', () => {
       const mockConfig = {
         getPolicyEngine: vi.fn().mockReturnValue(mockPolicyEngine),
         isInteractive: vi.fn().mockReturnValue(false),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
 
       const toolCall = {
         request: { name: 'test-tool', args: {} },
@@ -116,7 +137,14 @@ describe('policy.ts', () => {
 
       const mockConfig = {
         getPolicyEngine: vi.fn().mockReturnValue(mockPolicyEngine),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
 
       const toolCall = {
         request: { name: 'test-tool', args: {} },
@@ -135,7 +163,14 @@ describe('policy.ts', () => {
       const mockConfig = {
         getPolicyEngine: vi.fn().mockReturnValue(mockPolicyEngine),
         isInteractive: vi.fn().mockReturnValue(true),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
 
       const toolCall = {
         request: { name: 'test-tool', args: {} },
@@ -151,7 +186,14 @@ describe('policy.ts', () => {
     it('should set AUTO_EDIT mode for auto-edit transition tools', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -174,7 +216,14 @@ describe('policy.ts', () => {
     it('should handle standard policy updates (persist=false)', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -199,7 +248,14 @@ describe('policy.ts', () => {
     it('should handle standard policy updates with persistence', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -224,7 +280,14 @@ describe('policy.ts', () => {
     it('should handle shell command prefixes', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -255,7 +318,14 @@ describe('policy.ts', () => {
     it('should handle MCP policy updates (server scope)', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -289,7 +359,14 @@ describe('policy.ts', () => {
     it('should NOT publish update for ProceedOnce', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -307,7 +384,14 @@ describe('policy.ts', () => {
     it('should NOT publish update for Cancel', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -324,7 +408,14 @@ describe('policy.ts', () => {
     it('should NOT publish update for ModifyWithEditor', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -343,7 +434,14 @@ describe('policy.ts', () => {
     it('should handle MCP ProceedAlwaysTool (specific tool name)', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -377,7 +475,14 @@ describe('policy.ts', () => {
     it('should handle MCP ProceedAlways (persist: false)', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -409,7 +514,14 @@ describe('policy.ts', () => {
     it('should handle MCP ProceedAlwaysAndSave (persist: true)', async () => {
       const mockConfig = {
         setApprovalMode: vi.fn(),
+        config: undefined as any,
       } as unknown as Mocked<Config>;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const mockMessageBus = {
         publish: vi.fn(),
       } as unknown as Mocked<MessageBus>;
@@ -445,7 +557,14 @@ describe('policy.ts', () => {
     it('should return default denial message when no rule provided', () => {
       const mockConfig = {
         getApprovalMode: vi.fn().mockReturnValue(ApprovalMode.DEFAULT),
+        config: undefined as any,
       } as unknown as Config;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
 
       const { errorMessage, errorType } = getPolicyDenialError(mockConfig);
 
@@ -456,7 +575,14 @@ describe('policy.ts', () => {
     it('should return custom deny message if provided', () => {
       const mockConfig = {
         getApprovalMode: vi.fn().mockReturnValue(ApprovalMode.DEFAULT),
+        config: undefined as any,
       } as unknown as Config;
+
+      Object.defineProperty(mockConfig, 'config', {
+        get: () => mockConfig,
+        enumerable: true,
+        configurable: true,
+      });
       const rule = {
         decision: PolicyDecision.DENY,
         denyMessage: 'Custom Deny',
@@ -525,6 +651,7 @@ describe('Plan Mode Denial Consistency', () => {
       setApprovalMode: vi.fn(),
       getUsageStatisticsEnabled: vi.fn().mockReturnValue(false),
     } as unknown as Mocked<Config>;
+    Object.defineProperty(mockConfig, 'config', { get: () => mockConfig });
   });
 
   afterEach(() => {

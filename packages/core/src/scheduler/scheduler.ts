@@ -5,6 +5,7 @@
  */
 
 import type { Config } from '../config/config.js';
+import type { AgentLoopContext } from '../config/agent-loop-context.js';
 import type { MessageBus } from '../confirmation-bus/message-bus.js';
 import { SchedulerStateManager } from './state-manager.js';
 import { resolveConfirmation } from './confirmation.js';
@@ -56,8 +57,8 @@ interface SchedulerQueueItem {
 }
 
 export interface SchedulerOptions {
-  config: Config;
-  messageBus: MessageBus;
+  config: AgentLoopContext;
+  messageBus?: MessageBus;
   getPreferredEditor: () => EditorType | undefined;
   schedulerId: string;
   parentCallId?: string;
@@ -96,7 +97,7 @@ export class Scheduler {
   private readonly state: SchedulerStateManager;
   private readonly executor: ToolExecutor;
   private readonly modifier: ToolModificationHandler;
-  private readonly config: Config;
+  private readonly context: AgentLoopContext;
   private readonly messageBus: MessageBus;
   private readonly getPreferredEditor: () => EditorType | undefined;
   private readonly schedulerId: string;
@@ -108,8 +109,8 @@ export class Scheduler {
   private readonly requestQueue: SchedulerQueueItem[] = [];
 
   constructor(options: SchedulerOptions) {
-    this.config = options.config;
-    this.messageBus = options.messageBus;
+    this.context = options.config;
+    this.messageBus = options.messageBus ?? this.context.getMessageBus();
     this.getPreferredEditor = options.getPreferredEditor;
     this.schedulerId = options.schedulerId;
     this.parentCallId = options.parentCallId;
@@ -119,12 +120,16 @@ export class Scheduler {
       this.schedulerId,
       (call) => logToolCall(this.config, new ToolCallEvent(call)),
     );
-    this.executor = new ToolExecutor(this.config);
+    this.executor = new ToolExecutor(this.context);
     this.modifier = new ToolModificationHandler();
 
     this.setupMessageBusListener(this.messageBus);
 
     coreEvents.on(CoreEvent.McpProgress, this.handleMcpProgress);
+  }
+
+  private get config(): Config {
+    return this.context.config;
   }
 
   dispose(): void {

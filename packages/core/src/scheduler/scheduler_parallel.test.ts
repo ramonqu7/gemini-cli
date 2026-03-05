@@ -216,7 +216,14 @@ describe('Scheduler Parallel Execution', () => {
       getEnableHooks: vi.fn().mockReturnValue(true),
       setApprovalMode: vi.fn(),
       getApprovalMode: vi.fn().mockReturnValue(ApprovalMode.DEFAULT),
+      config: undefined as any,
     } as unknown as Mocked<Config>;
+
+    Object.defineProperty(mockConfig, 'config', {
+      get: () => mockConfig,
+      enumerable: true,
+      configurable: true,
+    });
 
     mockMessageBus = {
       publish: vi.fn(),

@@ -13,6 +13,7 @@ import {
   type ToolCallResponseInfo,
   type ToolResult,
   type Config,
+  type AgentLoopContext,
   type ToolLiveOutput,
 } from '../index.js';
 import { SHELL_TOOL_NAME } from '../tools/tool-names.js';
@@ -49,7 +50,11 @@ export interface ToolExecutionContext {
 }
 
 export class ToolExecutor {
-  constructor(private readonly config: Config) {}
+  constructor(private readonly context: AgentLoopContext) {}
+
+  private get config(): Config {
+    return this.context.config;
+  }
 
   async execute(context: ToolExecutionContext): Promise<CompletedToolCall> {
     const { call, signal, outputUpdateHandler, onUpdateToolCall } = context;

@@ -97,6 +97,7 @@ import type {
 import { ModelAvailabilityService } from '../availability/modelAvailabilityService.js';
 import { ModelRouterService } from '../routing/modelRouterService.js';
 import { OutputFormat } from '../output/types.js';
+import { type AgentLoopContext } from './agent-loop-context.js';
 import {
   ModelConfigService,
   type ModelConfig,
@@ -142,6 +143,7 @@ import { setGlobalProxy } from '../utils/fetch.js';
 import { SubagentTool } from '../agents/subagent-tool.js';
 import { ExperimentFlags } from '../code_assist/experiments/flagNames.js';
 import { debugLogger } from '../utils/debugLogger.js';
+import { getPromptIdWithFallback } from '../utils/promptIdContext.js';
 import { SkillManager, type SkillDefinition } from '../skills/skillManager.js';
 import { startupProfiler } from '../telemetry/startupProfiler.js';
 import type { AgentDefinition } from '../agents/types.js';
@@ -599,7 +601,7 @@ export interface ConfigParameters {
   };
 }
 
-export class Config implements McpContext {
+export class Config implements McpContext, AgentLoopContext {
   private toolRegistry!: ToolRegistry;
   private mcpClientManager?: McpClientManager;
   private allowedMcpServers: string[];
@@ -1591,6 +1593,14 @@ export class Config implements McpContext {
 
   getAcknowledgedAgentsService(): AcknowledgedAgentsService {
     return this.acknowledgedAgentsService;
+  }
+
+  get config(): Config {
+    return this;
+  }
+
+  get promptId(): string {
+    return getPromptIdWithFallback('config');
   }
 
   getToolRegistry(): ToolRegistry {
