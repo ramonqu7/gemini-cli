@@ -64,6 +64,7 @@ import { type Content, type Part, type SchemaUnion } from '@google/genai';
 import { createMockWorkspaceContext } from '../test-utils/mockWorkspaceContext.js';
 import { StandardFileSystemService } from '../services/fileSystemService.js';
 import type { BaseLlmClient } from '../core/baseLlmClient.js';
+import { FileReadTracker } from '../services/fileReadTracker.js';
 
 describe('EditTool', () => {
   let tool: EditTool;
@@ -103,6 +104,7 @@ describe('EditTool', () => {
       setApprovalMode: vi.fn(),
       getWorkspaceContext: () => createMockWorkspaceContext(rootDir),
       getFileSystemService: () => fileSystemService,
+      getFileReadTracker: () => new FileReadTracker(),
       getIdeMode: () => false,
       getApiKey: () => 'test-api-key',
       getModel: () => 'test-model',

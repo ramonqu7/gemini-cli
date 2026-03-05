@@ -233,3 +233,6 @@ export * from './services/streamingToolPipelineService.js';
 export * from './services/prefetchService.js';
 export * from './services/prefetchServiceInstance.js';
 export * from './services/smartContextService.js';
+export * from './services/dynamicContextService.js';
+export * from './services/tokenBudgetService.js';
+export * from './services/fileReadTracker.js';

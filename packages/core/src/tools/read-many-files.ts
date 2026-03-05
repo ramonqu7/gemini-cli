@@ -390,6 +390,9 @@ ${finalExclusionPatternsForDescription
               programming_language,
             ),
           );
+
+          // Track that this file has been read in the current session
+          this.config.getFileReadTracker().recordRead(filePath);
         }
       } else {
         // Handle Promise rejection (unexpected errors)

@@ -43,6 +43,7 @@ import {
   createMockMessageBus,
   getMockMessageBusInstance,
 } from '../test-utils/mock-message-bus.js';
+import { FileReadTracker } from '../services/fileReadTracker.js';
 
 const rootDir = path.resolve(os.tmpdir(), 'gemini-cli-test-root');
 const plansDir = path.resolve(os.tmpdir(), 'gemini-cli-test-plans');
@@ -74,6 +75,7 @@ vi.mocked(IdeClient.getInstance).mockResolvedValue(
 
 // Mock Config
 const fsService = new StandardFileSystemService();
+const fileReadTracker = new FileReadTracker();
 const mockConfigInternal = {
   getTargetDir: () => rootDir,
   getApprovalMode: vi.fn(() => ApprovalMode.DEFAULT),
@@ -81,6 +83,7 @@ const mockConfigInternal = {
   getGeminiClient: vi.fn(), // Initialize as a plain mock function
   getBaseLlmClient: vi.fn(), // Initialize as a plain mock function
   getFileSystemService: () => fsService,
+  getFileReadTracker: () => fileReadTracker,
   getIdeMode: vi.fn(() => false),
   getWorkspaceContext: () => new WorkspaceContext(rootDir, [plansDir]),
   getApiKey: () => 'test-key',

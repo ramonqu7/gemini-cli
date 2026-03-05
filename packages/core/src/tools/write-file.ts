@@ -333,11 +333,23 @@ class WriteFileToolInvocation extends BaseToolInvocation<
         content,
       );
 
+      // Check if the model is overwriting a file it hasn't read in this session
+      const blindOverwrite =
+        !isNewFile &&
+        !this.config.getFileReadTracker().wasRead(this.resolvedPath);
+
       const llmSuccessMessageParts = [
         isNewFile
           ? `Successfully created and wrote to new file: ${this.resolvedPath}.`
           : `Successfully overwrote file: ${this.resolvedPath}.`,
       ];
+      if (blindOverwrite) {
+        llmSuccessMessageParts.push(
+          'WARNING: You overwrote a file you have not read in this session. ' +
+            'This may cause data loss if the file contained changes you are not aware of. ' +
+            'In the future, read the file first with read_file, or use the edit tool for targeted changes.',
+        );
+      }
       if (modified_by_user) {
         llmSuccessMessageParts.push(
           `User modified the \`content\` to be: ${content}`,
@@ -370,6 +382,10 @@ class WriteFileToolInvocation extends BaseToolInvocation<
           programmingLanguage,
         ),
       );
+
+      // After a successful write, record the file as read since the model
+      // now has the current content via the diff context snippet.
+      this.config.getFileReadTracker().recordRead(this.resolvedPath);
 
       const displayResult: FileDiff = {
         fileDiff,

@@ -1,0 +1,54 @@
+==== Build Information =======
+Built at      2026-03-05 06:09:12
+From CL       878830117
+Build Time          00:00:00
+Invoked by    cdpush-submit-server-prod-jobs
+   on Borg    job prod.submit-server, cell qm, task 0
+   using      Submit Server
+   on         48100d642c481134-3d9a7d90615.borgtask.google.com
+   at         2026-03-05 06:09:12
+Notes:
+BBCP build
+==== Push Information ===========
+Push          bigquery/reservation/regional/prod-regular-borg-us/@20260305-060912.670006
+Version       20260305-060853.305778
+Created       2026-03-05 06:09:12
+Invoked by    cdpush-submit-server-prod-jobs
+   on Borg    job prod.submit-server, cell qm, task 0
+   using      Submit Server
+   on         48100d642c481134-3d9a7d90615.borgtask.google.com
+   at         2026-03-05 06:09:12
+Notes:
+BBCP build
+==== Push Progression ========
+Time                Stage      State     Stats
+2026-03-05 06:09:12            BUILDING  [K
+2026-03-05 06:09:13            BUILT     [K
+2026-03-05 06:09:13            PENDING   [K
+2026-03-05 06:09:13            IDLE      [K
+2026-03-05 06:09:14 #0 selecti GENERATIN [K
+2026-03-05 06:09:15 #0 selecti FINISHED_ Total=0 [K
+2026-03-05 06:09:15 #1 wave-0  SELECT    [K
+2026-03-05 06:09:15 #1 wave-0  UPDATE    [K
+2026-03-05 06:09:39 #1 wave-0  SOAK      [K
+2026-03-05 06:14:09 #1 wave-0  TEST      [K
+2026-03-05 06:16:35 #1 wave-0  TESTED    Total=68 Success=68 [K
+2026-03-05 06:16:36 #2 wave-0  SELECT    [K
+2026-03-05 06:16:36 #2 wave-0  UPDATE    [K
+2026-03-05 06:16:49 #2 wave-0  SOAK      [K
+2026-03-05 06:21:19 #2 wave-0  TEST      [K
+2026-03-05 06:23:53 #2 wave-0  TESTED    Total=232 Success=232 [K
+2026-03-05 06:23:53 #3 wave-0  SELECT    [K
+2026-03-05 06:23:53 #3 wave-0  UPDATE    [K
+2026-03-05 06:24:13 #3 wave-0  SOAK      [K
+2026-03-05 06:42:13 #3 wave-0  TEST      [K
+2026-03-05 06:45:44 #3 wave-0  TESTED    Total=313 Success=313 [K
+2026-03-05 06:45:45 #4 wave-0  SELECT    [K
+2026-03-05 06:45:45 #4 wave-0  UPDATE    [K
+2026-03-05 06:46:36 #4 wave-0  SOAK      [K
+2026-03-05 07:13:36 #4 wave-0  TEST      [K
+2026-03-05 07:13:36 #4 wave-0  TESTED    Total=936 Success=935 Fail=1 [K
+2026-03-05 07:15:45 #5 selecti GENERATIN [K
+2026-03-05 07:15:45 #5 selecti FINISHED_ Total=0 [K
+2026-03-05 07:15:45            COPY_TO_L [K
+2026-03-05 07:15:48            COMPLETE  Total=1549 Success=1548 Fail=1 [K

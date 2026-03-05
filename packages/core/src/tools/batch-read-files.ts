@@ -149,6 +149,9 @@ class BatchReadFilesToolInvocation extends BaseToolInvocation<
         typeof result.llmContent === 'string' ? result.llmContent : '';
     }
 
+    // Track that this file has been read in the current session
+    this.config.getFileReadTracker().recordRead(resolvedPath);
+
     return { filePath, content };
   }
 }

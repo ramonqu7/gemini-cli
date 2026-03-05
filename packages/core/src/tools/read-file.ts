@@ -136,6 +136,9 @@ class ReadFileToolInvocation extends BaseToolInvocation<
           ),
         );
 
+        // Track that this file has been read in the current session
+        this.config.getFileReadTracker().recordRead(this.resolvedPath);
+
         return {
           llmContent: cached.content,
           returnDisplay: `${makeRelative(this.resolvedPath, this.config.getTargetDir())} (prefetched)`,
@@ -203,6 +206,9 @@ ${result.llmContent}`;
         programming_language,
       ),
     );
+
+    // Track that this file has been read in the current session
+    this.config.getFileReadTracker().recordRead(this.resolvedPath);
 
     return {
       llmContent,

@@ -916,6 +916,10 @@ ${snippet}`);
         );
       }
 
+      // After a successful edit, record the file as read since the edit tool
+      // reads the file content as part of calculating the replacement.
+      this.config.getFileReadTracker().recordRead(this.params.file_path);
+
       return {
         llmContent: llmSuccessMessageParts.join(' '),
         returnDisplay: displayResult,

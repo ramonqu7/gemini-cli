@@ -73,6 +73,7 @@ import {
   type FileSystemService,
 } from '../services/fileSystemService.js';
 import { StateSnapshotService } from '../services/stateSnapshotService.js';
+import { DynamicContextService } from '../services/dynamicContextService.js';
 import {
   TrackerCreateTaskTool,
   TrackerUpdateTaskTool,
@@ -159,6 +160,7 @@ import { ContextBuilder } from '../safety/context-builder.js';
 import { CheckerRegistry } from '../safety/registry.js';
 import { ConsecaSafetyChecker } from '../safety/conseca/conseca.js';
 import { PlanExecutionService } from '../services/planExecutionService.js';
+import { FileReadTracker } from '../services/fileReadTracker.js';
 
 export interface AccessibilitySettings {
   /** @deprecated Use ui.loadingPhrases instead. */
@@ -627,7 +629,9 @@ export class Config implements McpContext {
   private clientVersion: string;
   private fileSystemService: FileSystemService;
   private readonly stateSnapshotService: StateSnapshotService;
+  private readonly dynamicContextService: DynamicContextService;
   private trackerService?: TrackerService;
+  private readonly fileReadTracker: FileReadTracker;
   private contentGeneratorConfig!: ContentGeneratorConfig;
   private contentGenerator!: ContentGenerator;
   readonly modelConfigService: ModelConfigService;
@@ -829,6 +833,8 @@ export class Config implements McpContext {
       params.embeddingModel ?? DEFAULT_GEMINI_EMBEDDING_MODEL;
     this.fileSystemService = new StandardFileSystemService();
     this.stateSnapshotService = new StateSnapshotService();
+    this.fileReadTracker = new FileReadTracker();
+    this.dynamicContextService = new DynamicContextService();
     this.sandbox = params.sandbox;
     this.targetDir = path.resolve(params.targetDir);
     this.folderTrust = params.folderTrust ?? false;
@@ -2403,6 +2409,21 @@ export class Config implements McpContext {
    */
   getStateSnapshotService(): StateSnapshotService {
     return this.stateSnapshotService;
+  }
+
+  /**
+   * Get the FileReadTracker used to track which files have been read
+   * in the current session. Used by write_file to warn about blind overwrites.
+   */
+  getFileReadTracker(): FileReadTracker {
+    return this.fileReadTracker;
+  }
+
+  /**
+   * Get the DynamicContextService used to inject per-turn workspace context.
+   */
+  getDynamicContextService(): DynamicContextService {
+    return this.dynamicContextService;
   }
 
   /**

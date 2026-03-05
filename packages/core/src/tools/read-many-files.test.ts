@@ -31,6 +31,7 @@ import {
 import * as glob from 'glob';
 import { createMockMessageBus } from '../test-utils/mock-message-bus.js';
 import { GEMINI_IGNORE_FILE_NAME } from '../config/constants.js';
+import { FileReadTracker } from '../services/fileReadTracker.js';
 
 vi.mock('glob', { spy: true });
 
@@ -83,6 +84,7 @@ describe('ReadManyFilesTool', () => {
     const mockConfig = {
       getFileService: () => fileService,
       getFileSystemService: () => new StandardFileSystemService(),
+      getFileReadTracker: () => new FileReadTracker(),
 
       getFileFilteringOptions: () => ({
         respectGitIgnore: true,
@@ -522,6 +524,7 @@ describe('ReadManyFilesTool', () => {
       const mockConfig = {
         getFileService: () => fileService,
         getFileSystemService: () => new StandardFileSystemService(),
+      getFileReadTracker: () => new FileReadTracker(),
         getFileFilteringOptions: () => ({
           respectGitIgnore: true,
           respectGeminiIgnore: true,

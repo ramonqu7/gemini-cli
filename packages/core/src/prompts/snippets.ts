@@ -228,6 +228,20 @@ When modifying existing files, ALWAYS use \`${EDIT_TOOL_NAME}\` with \`old_strin
 - **Multiple edits to one file**: Make separate \`${EDIT_TOOL_NAME}\` calls for each change.
 - **New files only**: Use \`${WRITE_FILE_TOOL_NAME}\` exclusively when creating files that do not exist yet.
 - **AVOID \`${WRITE_FILE_TOOL_NAME}\` for existing files** — it overwrites the entire file, which is error-prone, produces large diffs, and wastes context. Only use it if you are replacing the vast majority of the file content.
+
+## File Modification Safety
+- ALWAYS read a file before overwriting it with \`${WRITE_FILE_TOOL_NAME}\`. Blind overwrites lose code.
+- If you have not read the file, use \`${EDIT_TOOL_NAME}\` with \`old_string\`/\`new_string\` instead — it only changes what you specify.
+- The system will warn you if you try to overwrite an unread file.
+
+## Error Recovery
+When a tool call fails, follow these recovery strategies:
+- **File not found:** Search for the correct path using \`${GLOB_TOOL_NAME}\` or \`${GREP_TOOL_NAME}\` before retrying.
+- **Edit failed (old_string not found):** Re-read the file to see current content, then retry with correct \`${EDIT_PARAM_OLD_STRING}\`.
+- **Shell command failed:** Read stderr carefully. Common fixes: install missing deps, fix path, use different command.
+- **Permission denied:** Do NOT retry with sudo. Explain the issue to the user.
+- **Timeout:** Consider breaking the command into smaller operations.
+- Do NOT retry the exact same failed command. Always change your approach.
 `.trim();
 }
 

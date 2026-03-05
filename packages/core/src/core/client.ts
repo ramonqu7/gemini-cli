@@ -313,6 +313,16 @@ export class GeminiClient {
   async resetChat(): Promise<void> {
     this.chat = await this.startChat();
     this.updateTelemetryTokenCount();
+
+    // Reset all session-scoped services
+    this.loopDetector.reset('', '');
+    this.loopRecovery.reset();
+    this.prefetchService.clearCache();
+    this.streamingToolPipeline.reset();
+    this.config.getStateSnapshotService?.()?.reset?.();
+    this.config.getPlanExecutionService?.()?.reset?.();
+    this.config.getDynamicContextService?.()?.reset?.();
+    this.config.getFileReadTracker?.()?.reset?.();
   }
 
   dispose() {
@@ -677,6 +687,26 @@ export class GeminiClient {
       }
       this.lastSentIdeContext = newIdeContext;
       this.forceFullIdeContext = false;
+    }
+
+    // Inject fresh dynamic context (git status, working directory, session
+    // modified files) so the model has an up-to-date picture of the workspace.
+    if (!hasPendingToolCall) {
+      try {
+        const dynamicCtx = this.config.getDynamicContextService();
+        const snapshot = await dynamicCtx.getContextSnapshot(
+          this.config.getTargetDir(),
+          this.config.getStateSnapshotService?.(),
+        );
+        if (snapshot) {
+          this.getChat().addHistory({
+            role: 'user',
+            parts: [{ text: snapshot }],
+          });
+        }
+      } catch {
+        // Non-fatal: if dynamic context fails, proceed without it.
+      }
     }
 
     // Re-initialize turn with fresh history.

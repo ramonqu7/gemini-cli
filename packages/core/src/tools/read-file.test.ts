@@ -19,6 +19,7 @@ import { createMockWorkspaceContext } from '../test-utils/mockWorkspaceContext.j
 import { WorkspaceContext } from '../utils/workspaceContext.js';
 import { createMockMessageBus } from '../test-utils/mock-message-bus.js';
 import { GEMINI_IGNORE_FILE_NAME } from '../config/constants.js';
+import { FileReadTracker } from '../services/fileReadTracker.js';
 
 vi.mock('../telemetry/loggers.js', () => ({
   logFileOperation: vi.fn(),
@@ -37,6 +38,7 @@ describe('ReadFileTool', () => {
     const mockConfigInstance = {
       getFileService: () => new FileDiscoveryService(tempRootDir),
       getFileSystemService: () => new StandardFileSystemService(),
+      getFileReadTracker: () => new FileReadTracker(),
       getTargetDir: () => tempRootDir,
       getWorkspaceContext: () => createMockWorkspaceContext(tempRootDir),
       getFileFilteringOptions: () => ({
@@ -451,6 +453,7 @@ describe('ReadFileTool', () => {
         const mockConfigInstance = {
           getFileService: () => new FileDiscoveryService(tempRootDir),
           getFileSystemService: () => new StandardFileSystemService(),
+          getFileReadTracker: () => new FileReadTracker(),
           getTargetDir: () => tempRootDir,
           getWorkspaceContext: () => new WorkspaceContext(tempRootDir),
           getFileFilteringOptions: () => ({
