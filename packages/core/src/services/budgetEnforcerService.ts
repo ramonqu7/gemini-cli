@@ -4,7 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { HarnessBudgetConfig, parseDuration } from './harnessConfig.js';
+import type { HarnessBudgetConfig } from './harnessConfig.js';
+import { parseDuration } from './harnessConfig.js';
 
 /**
  * Graduated budget consumption levels.
@@ -77,7 +78,9 @@ export class BudgetEnforcerService {
    */
   getWarningMessage(): string | null {
     const status = this.getStatus();
-    const pct = Math.round(Math.max(status.turnPercent, status.timePercent) * 100);
+    const pct = Math.round(
+      Math.max(status.turnPercent, status.timePercent) * 100,
+    );
     const turns = `${status.turnsUsed}/${status.turnsMax} turns`;
 
     switch (status.level) {

@@ -6,7 +6,7 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { BudgetEnforcerService } from './budgetEnforcerService.js';
-import { HarnessBudgetConfig } from './harnessConfig.js';
+import type { HarnessBudgetConfig } from './harnessConfig.js';
 
 describe('BudgetEnforcerService', () => {
   const baseConfig: HarnessBudgetConfig = {
@@ -221,7 +221,7 @@ describe('BudgetEnforcerService', () => {
           new BudgetEnforcerService({
             ...baseConfig,
             maxDuration: 'invalid',
-          })
+          }),
       ).toThrow('Invalid duration');
     });
   });
