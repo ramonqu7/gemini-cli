@@ -405,6 +405,15 @@ import { McpClientManager } from '../tools/mcp-client-manager.js';
 import { type McpContext } from '../tools/mcp-client.js';
 import type { EnvironmentSanitizationConfig } from '../services/environmentSanitization.js';
 import { getErrorMessage } from '../utils/errors.js';
+import { CronService } from '../services/cronService.js';
+import {
+  type HarnessConfig,
+  type PartialHarnessConfig,
+  mergeHarnessConfig,
+  parseDuration,
+} from '../services/harnessConfig.js';
+import { BudgetEnforcerService } from '../services/budgetEnforcerService.js';
+import { ScopeEnforcerService } from '../services/scopeEnforcerService.js';
 
 export type { FileFilteringOptions };
 export {
@@ -612,6 +621,7 @@ export interface ConfigParameters {
     overageStrategy?: OverageStrategy;
   };
   thinking?: ThinkingSettings;
+  harness?: PartialHarnessConfig;
 }
 
 export class Config implements McpContext {
@@ -691,6 +701,10 @@ export class Config implements McpContext {
   private readonly noBrowser: boolean;
   private readonly folderTrust: boolean;
   private ideMode: boolean;
+  private readonly harnessConfig: HarnessConfig;
+  private cronService: CronService | null = null;
+  private budgetEnforcer: BudgetEnforcerService | null = null;
+  private scopeEnforcer: ScopeEnforcerService | null = null;
 
   private _activeModel: string;
   private readonly maxSessionTurns: number;
@@ -998,6 +1012,27 @@ export class Config implements McpContext {
     this.fileExclusions = new FileExclusions(this);
     this.eventEmitter = params.eventEmitter;
     this.enableConseca = params.enableConseca ?? false;
+
+    // Harness engineering: budget, scope, and loop services
+    this.harnessConfig = params.harness
+      ? mergeHarnessConfig(params.harness)
+      : mergeHarnessConfig();
+    this.budgetEnforcer = new BudgetEnforcerService(this.harnessConfig.budget);
+    this.scopeEnforcer = new ScopeEnforcerService(
+      this.harnessConfig.scope,
+      this.cwd,
+    );
+    if (this.harnessConfig.loop.enabled) {
+      const maxDurationMs =
+        parseDuration(this.harnessConfig.loop.maxDuration) ??
+        3 * 24 * 60 * 60 * 1000;
+      this.cronService = new CronService({
+        maxConcurrent: this.harnessConfig.loop.maxConcurrent,
+        maxDurationMs,
+        enabled: true,
+      });
+      this.cronService.start();
+    }
 
     // Initialize Safety Infrastructure
     const contextBuilder = new ContextBuilder(this);
@@ -2399,6 +2434,22 @@ export class Config implements McpContext {
     return this.folderTrust;
   }
 
+  getCronService(): CronService | null {
+    return this.cronService;
+  }
+
+  getBudgetEnforcer(): BudgetEnforcerService | null {
+    return this.budgetEnforcer;
+  }
+
+  getScopeEnforcer(): ScopeEnforcerService | null {
+    return this.scopeEnforcer;
+  }
+
+  getHarnessConfig(): HarnessConfig {
+    return this.harnessConfig;
+  }
+
   /**
    * Returns 'true' if the workspace is considered "trusted".
    * 'false' for untrusted.
@@ -2918,9 +2969,7 @@ export class Config implements McpContext {
       registry.registerTool(new BatchReadFilesTool(this, this.messageBus)),
     );
     maybeRegister(BatchShellCommandsTool, () =>
-      registry.registerTool(
-        new BatchShellCommandsTool(this, this.messageBus),
-      ),
+      registry.registerTool(new BatchShellCommandsTool(this, this.messageBus)),
     );
     maybeRegister(MemoryTool, () =>
       registry.registerTool(new MemoryTool(this.messageBus)),

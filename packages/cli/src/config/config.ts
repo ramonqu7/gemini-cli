@@ -26,7 +26,7 @@ import {
   loadServerHierarchicalMemory,
   ASK_USER_TOOL_NAME,
   getVersion,
-  PREVIEW_GEMINI_MODEL_AUTO,
+  PREVIEW_GEMINI_3_1_MODEL_AUTO,
   type HierarchicalMemory,
   coreEvents,
   GEMINI_MODEL_ALIAS_AUTO,
@@ -38,6 +38,7 @@ import {
   type HookDefinition,
   type HookEventName,
   type OutputFormat,
+  type PartialHarnessConfig,
 } from '@google/gemini-cli-core';
 import {
   type Settings,
@@ -648,7 +649,7 @@ export async function loadCliConfig(
   );
   policyEngineConfig.nonInteractive = !interactive;
 
-  const defaultModel = PREVIEW_GEMINI_MODEL_AUTO;
+  const defaultModel = PREVIEW_GEMINI_3_1_MODEL_AUTO;
   const specifiedModel =
     argv.model || process.env['GEMINI_MODEL'] || settings.model?.name;
 
@@ -825,6 +826,11 @@ export async function loadCliConfig(
       };
     },
     enableConseca: settings.security?.enableConseca,
+    // Harness config is not yet in the settings schema; access via cast
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+    harness: (settings as Record<string, unknown>)['harness'] as
+      | PartialHarnessConfig
+      | undefined,
   });
 }
 
