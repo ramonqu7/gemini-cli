@@ -249,3 +249,4 @@ export * from './services/teamKnowledgeService.js';
 export * from './services/repoMapService.js';
 export * from './services/repoMapTrigger.js';
 export * from './services/oncallOrchestratorService.js';
+export * from './services/cronService.js';
