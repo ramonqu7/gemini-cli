@@ -112,7 +112,7 @@ export const CollapsibleToolResult: React.FC<CollapsibleToolResultProps> = ({
   status,
   resultDisplay,
   toolName: _toolName,
-  toolDescription: _toolDescription,
+  toolDescription,
   ...restProps
 }) => {
   const settings = useSettings();
@@ -133,8 +133,18 @@ export const CollapsibleToolResult: React.FC<CollapsibleToolResultProps> = ({
     !hasNoResult &&
     status === CoreToolCallStatus.Success;
 
-  // Show a live partial output count while the tool is executing
-  if (isExecuting && !hasNoResult) {
+  // Show progress info while the tool is executing
+  if (isExecuting) {
+    if (hasNoResult) {
+      // No output yet — show the tool description as a progress hint
+      return toolDescription ? (
+        <Box height={1} overflow="hidden">
+          <Text color={theme.text.secondary} dimColor wrap="truncate">
+            {toolDescription}
+          </Text>
+        </Box>
+      ) : null;
+    }
     const lineCount = countResultLines(resultDisplay);
     return (
       <>
