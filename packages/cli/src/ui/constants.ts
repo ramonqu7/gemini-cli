@@ -55,3 +55,9 @@ export const MIN_TERMINAL_WIDTH_FOR_FULL_LABEL = 100;
 
 /** Default context usage fraction at which to trigger compression */
 export const DEFAULT_COMPRESSION_THRESHOLD = 0.5;
+
+/** Only show elapsed time after this threshold (avoids flicker for fast tools) */
+export const ELAPSED_TIME_SHOW_THRESHOLD_MS = 2000;
+
+/** How often to update the elapsed time display */
+export const ELAPSED_TIME_UPDATE_INTERVAL_MS = 1000;

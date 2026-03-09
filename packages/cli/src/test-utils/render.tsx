@@ -572,6 +572,7 @@ const baseMockUiState = {
   nightly: false,
   updateInfo: null,
   pendingHistoryItems: [],
+  toolOutputExpanded: false,
 };
 
 export const mockAppState: AppState = {

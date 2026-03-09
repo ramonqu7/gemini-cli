@@ -16,6 +16,7 @@ import { useFlickerDetector } from '../hooks/useFlickerDetector.js';
 import { useAlternateBuffer } from '../hooks/useAlternateBuffer.js';
 import { CopyModeWarning } from '../components/CopyModeWarning.js';
 import { BackgroundShellDisplay } from '../components/BackgroundShellDisplay.js';
+import { AgentTeamPanel } from '../components/AgentTeamPanel.js';
 import { StreamingState } from '../types.js';
 
 export const DefaultAppLayout: React.FC = () => {
@@ -59,6 +60,7 @@ export const DefaultAppLayout: React.FC = () => {
             />
           </Box>
         )}
+      <AgentTeamPanel />
       <Box
         flexDirection="column"
         ref={uiState.mainControlsRef}

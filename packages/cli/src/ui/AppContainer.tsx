@@ -272,6 +272,7 @@ export const AppContainer = (props: AppContainerProps) => {
 
   const [newAgents, setNewAgents] = useState<AgentDefinition[] | null>(null);
   const [constrainHeight, setConstrainHeight] = useState<boolean>(true);
+  const [toolOutputExpanded, setToolOutputExpanded] = useState<boolean>(false);
   const [expandHintTrigger, triggerExpandHint] = useTimedMessage<boolean>(
     EXPAND_HINT_DURATION_MS,
   );
@@ -1269,6 +1270,7 @@ Logging in with Google... Restarting Gemini CLI to continue.
           refreshStatic();
         }
       }
+      setToolOutputExpanded(false);
 
       const isSlash = isSlashCommand(submittedValue.trim());
       const isIdle = streamingState === StreamingState.Idle;
@@ -1775,6 +1777,12 @@ Logging in with Google... Restarting Gemini CLI to continue.
           refreshStatic();
         }
         return true;
+      } else if (keyMatchers[Command.TOGGLE_TOOL_EXPAND](key)) {
+        setToolOutputExpanded((prev) => !prev);
+        if (!isAlternateBuffer) {
+          refreshStatic();
+        }
+        return true;
       } else if (
         (keyMatchers[Command.FOCUS_SHELL_INPUT](key) ||
           keyMatchers[Command.UNFOCUS_BACKGROUND_SHELL_LIST](key)) &&
@@ -2277,6 +2285,7 @@ Logging in with Google... Restarting Gemini CLI to continue.
       policyUpdateConfirmationRequest,
       isTrustedFolder,
       constrainHeight,
+      toolOutputExpanded,
       showErrorDetails,
       showFullTodos,
       filteredConsoleMessages,
@@ -2405,6 +2414,7 @@ Logging in with Google... Restarting Gemini CLI to continue.
       policyUpdateConfirmationRequest,
       isTrustedFolder,
       constrainHeight,
+      toolOutputExpanded,
       showErrorDetails,
       showFullTodos,
       filteredConsoleMessages,

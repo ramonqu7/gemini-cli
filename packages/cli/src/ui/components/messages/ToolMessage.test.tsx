@@ -6,7 +6,7 @@
 
 import type React from 'react';
 import { ToolMessage, type ToolMessageProps } from './ToolMessage.js';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { StreamingState } from '../../types.js';
 import { Text } from 'ink';
 import { type AnsiOutput, CoreToolCallStatus } from '@google/gemini-cli-core';

@@ -15,6 +15,7 @@ import {
   ToolStatusIndicator,
   ToolInfo,
   TrailingIndicator,
+  ElapsedTimeIndicator,
   isThisShellFocusable as checkIsShellFocusable,
   isThisShellFocused as checkIsShellFocused,
   useFocusHint,
@@ -24,8 +25,9 @@ import type { ToolMessageProps } from './ToolMessage.js';
 import { ACTIVE_SHELL_MAX_LINES } from '../../constants.js';
 import { useAlternateBuffer } from '../../hooks/useAlternateBuffer.js';
 import { useUIState } from '../../contexts/UIStateContext.js';
-import { type Config } from '@google/gemini-cli-core';
+import { type Config, CoreToolCallStatus } from '@google/gemini-cli-core';
 import { calculateShellMaxLines } from '../../utils/toolLayoutUtils.js';
+import { useElapsedTime } from '../../hooks/useElapsedTime.js';
 
 export interface ShellToolMessageProps extends ToolMessageProps {
   config?: Config;
@@ -116,6 +118,8 @@ export const ShellToolMessage: React.FC<ShellToolMessageProps> = ({
     resultDisplay,
   );
 
+  const elapsed = useElapsedTime(status === CoreToolCallStatus.Executing);
+
   return (
     <>
       <StickyHeader
@@ -138,6 +142,8 @@ export const ShellToolMessage: React.FC<ShellToolMessageProps> = ({
           emphasis={emphasis}
           originalRequestName={originalRequestName}
         />
+
+        <ElapsedTimeIndicator elapsed={elapsed} />
 
         <FocusHint
           shouldShowFocusHint={shouldShowFocusHint}
@@ -167,6 +173,8 @@ export const ShellToolMessage: React.FC<ShellToolMessageProps> = ({
           terminalWidth={terminalWidth}
           renderOutputAsMarkdown={renderOutputAsMarkdown}
           hasFocus={isThisShellFocused}
+          toolName={name}
+          toolDescription={description}
           maxLines={calculateShellMaxLines({
             status,
             isAlternateBuffer,

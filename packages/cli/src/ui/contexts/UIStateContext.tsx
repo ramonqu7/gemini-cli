@@ -157,6 +157,7 @@ export interface UIState {
   policyUpdateConfirmationRequest: PolicyUpdateConfirmationRequest | undefined;
   isTrustedFolder: boolean | undefined;
   constrainHeight: boolean;
+  toolOutputExpanded: boolean;
   showErrorDetails: boolean;
   filteredConsoleMessages: ConsoleMessageItem[];
   ideContextState: IdeContext | undefined;

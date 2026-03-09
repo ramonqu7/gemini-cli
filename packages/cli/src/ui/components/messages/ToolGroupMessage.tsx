@@ -5,7 +5,7 @@
  */
 
 import type React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { Box, Text } from 'ink';
 import type {
   HistoryItem,
@@ -31,6 +31,12 @@ import {
 } from '../../utils/toolLayoutUtils.js';
 import { getToolGroupBorderAppearance } from '../../utils/borderStyles.js';
 import { useSettings } from '../../contexts/SettingsContext.js';
+import { CliSpinner } from '../CliSpinner.js';
+import { TOOL_STATUS } from '../../constants.js';
+import {
+  getToolGroupCounts,
+  summarizeToolGroupActivity,
+} from '../../utils/toolGroupUtils.js';
 
 interface ToolGroupMessageProps {
   item: HistoryItem | HistoryItemWithoutId;
@@ -215,6 +221,35 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
     isExpandable,
   ]);
 
+  // Track elapsed time from when the group first renders with tools.
+  const groupStartTime = useRef<number | null>(null);
+  if (visibleToolCalls.length > 0 && groupStartTime.current === null) {
+    groupStartTime.current = Date.now();
+  }
+
+  // Compute group summary info (only for 2+ tools).
+  const showGroupSummary = visibleToolCalls.length >= 2;
+  const groupCounts = useMemo(
+    () => (showGroupSummary ? getToolGroupCounts(visibleToolCalls) : null),
+    [visibleToolCalls, showGroupSummary],
+  );
+  const allComplete =
+    groupCounts !== null && groupCounts.running === 0 && groupCounts.total > 0;
+  const activitySummary = useMemo(
+    () => (allComplete ? summarizeToolGroupActivity(visibleToolCalls) : ''),
+    [allComplete, visibleToolCalls],
+  );
+  const elapsedMs =
+    allComplete && groupStartTime.current !== null
+      ? Date.now() - groupStartTime.current
+      : null;
+  const elapsedLabel =
+    elapsedMs !== null
+      ? elapsedMs < 1000
+        ? `${elapsedMs}ms`
+        : `${(elapsedMs / 1000).toFixed(1)}s`
+      : null;
+
   // If all tools are filtered out (e.g., in-progress AskUser tools, confirming tools),
   // only render if we need to close a border from previous
   // tool groups. borderBottomOverride=true means we must render the closing border;
@@ -312,6 +347,26 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
           constrainHeight={constrainHeight && !!isExpandable}
           isOverflowing={hasOverflow}
         />
+      )}
+      {showGroupSummary && groupCounts && (
+        <Box paddingLeft={1}>
+          {allComplete ? (
+            <Text color={theme.text.secondary} dimColor>
+              <Text color={theme.status.success}>{TOOL_STATUS.SUCCESS}</Text>{' '}
+              {groupCounts.total} tools completed
+              {elapsedLabel ? ` in ${elapsedLabel}` : ''}
+              {activitySummary ? ` — ${activitySummary}` : ''}
+            </Text>
+          ) : (
+            <Text color={theme.text.secondary} dimColor>
+              <CliSpinner type="toggle" />{' '}
+              {groupCounts.running > 0 && `${groupCounts.running} running`}
+              {groupCounts.running > 0 && groupCounts.completed > 0 && ', '}
+              {groupCounts.completed > 0 &&
+                `${groupCounts.completed} completed`}
+            </Text>
+          )}
+        </Box>
       )}
     </Box>
   );

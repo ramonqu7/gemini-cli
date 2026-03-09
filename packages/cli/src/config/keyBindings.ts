@@ -94,6 +94,7 @@ export enum Command {
   EXPAND_PASTE = 'app.expandPaste',
   FOCUS_SHELL_INPUT = 'app.focusShellInput',
   UNFOCUS_SHELL_INPUT = 'app.unfocusShellInput',
+  TOGGLE_TOOL_EXPAND = 'app.toggleToolExpand',
   CLEAR_SCREEN = 'app.clearScreen',
   RESTART_APP = 'app.restart',
   SUSPEND_APP = 'app.suspend',
@@ -251,6 +252,7 @@ export const defaultKeyBindings: KeyBindingConfig = {
   [Command.BACKGROUND_SHELL_SELECT]: [{ key: 'return' }],
   [Command.BACKGROUND_SHELL_ESCAPE]: [{ key: 'escape' }],
   [Command.SHOW_MORE_LINES]: [{ key: 'o', ctrl: true }],
+  [Command.TOGGLE_TOOL_EXPAND]: [{ key: 'e', alt: true }],
   [Command.EXPAND_PASTE]: [{ key: 'o', ctrl: true }],
   [Command.FOCUS_SHELL_INPUT]: [{ key: 'tab' }],
   [Command.UNFOCUS_SHELL_INPUT]: [{ key: 'tab', shift: true }],
@@ -362,6 +364,7 @@ export const commandCategories: readonly CommandCategory[] = [
       Command.TOGGLE_YOLO,
       Command.CYCLE_APPROVAL_MODE,
       Command.SHOW_MORE_LINES,
+      Command.TOGGLE_TOOL_EXPAND,
       Command.EXPAND_PASTE,
       Command.TOGGLE_BACKGROUND_SHELL,
       Command.TOGGLE_BACKGROUND_SHELL_LIST,
@@ -463,6 +466,7 @@ export const commandDescriptions: Readonly<Record<Command, string>> = {
     'Cycle through approval modes: default (prompt), auto_edit (auto-approve edits), and plan (read-only). Plan mode is skipped when the agent is busy.',
   [Command.SHOW_MORE_LINES]:
     'Expand and collapse blocks of content when not in alternate buffer mode.',
+  [Command.TOGGLE_TOOL_EXPAND]: 'Expand or collapse all collapsed tool output.',
   [Command.EXPAND_PASTE]:
     'Expand or collapse a paste placeholder when cursor is over placeholder.',
   [Command.BACKGROUND_SHELL_SELECT]:

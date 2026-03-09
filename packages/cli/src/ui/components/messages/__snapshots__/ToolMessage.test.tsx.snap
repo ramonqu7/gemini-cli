@@ -4,10 +4,7 @@ exports[`<ToolMessage /> > JSON rendering > renders pretty JSON in ink frame 1`]
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ {                                                                            │
-│   "a": 1,                                                                    │
-│   "b": 2                                                                     │
-│ }                                                                            │
+│ 1 line — {"a":1,"b":2}  (Alt+E to expand)                                    │
 "
 `;
 
@@ -32,6 +29,7 @@ exports[`<ToolMessage /> > ToolStatusIndicator rendering > shows MockRespondingS
 │ ⊶  test-tool A tool for testing                                              │
 │                                                                              │
 │ Test result                                                                  │
+│ 1 line so far…                                                               │
 "
 `;
 
@@ -48,6 +46,7 @@ exports[`<ToolMessage /> > ToolStatusIndicator rendering > shows paused spinner 
 │ ⊶  test-tool A tool for testing                                              │
 │                                                                              │
 │ Test result                                                                  │
+│ 1 line so far…                                                               │
 "
 `;
 
@@ -56,6 +55,7 @@ exports[`<ToolMessage /> > ToolStatusIndicator rendering > shows paused spinner 
 │ ⊶  test-tool A tool for testing                                              │
 │                                                                              │
 │ Test result                                                                  │
+│ 1 line so far…                                                               │
 "
 `;
 
@@ -71,7 +71,7 @@ exports[`<ToolMessage /> > ToolStatusIndicator rendering > shows ✓ for Success
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ Test result                                                                  │
+│ 1 line — Test result  (Alt+E to expand)                                      │
 "
 `;
 
@@ -79,7 +79,7 @@ exports[`<ToolMessage /> > renders AnsiOutputText for AnsiOutput results 1`] = `
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ hello                                                                        │
+│ 1 line — [object Object]  (Alt+E to expand)                                  │
 "
 `;
 
@@ -87,8 +87,7 @@ exports[`<ToolMessage /> > renders DiffRenderer for diff results 1`] = `
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ 1 - old                                                                      │
-│ 1 + new                                                                      │
+│ file diff  (Alt+E to expand)                                                 │
 "
 `;
 
@@ -99,6 +98,7 @@ exports[`<ToolMessage /> > renders McpProgressIndicator with percentage and mess
 │ ████████░░░░░░░░░░░░ 42%                                                     │
 │ Working on it...                                                             │
 │ Test result                                                                  │
+│ 1 line so far…                                                               │
 "
 `;
 
@@ -106,7 +106,7 @@ exports[`<ToolMessage /> > renders basic tool information 1`] = `
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ Test result                                                                  │
+│ 1 line — Test result  (Alt+E to expand)                                      │
 "
 `;
 
@@ -114,7 +114,7 @@ exports[`<ToolMessage /> > renders emphasis correctly 1`] = `
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                            ← │
 │                                                                              │
-│ Test result                                                                  │
+│ 1 line — Test result  (Alt+E to expand)                                      │
 "
 `;
 
@@ -122,7 +122,7 @@ exports[`<ToolMessage /> > renders emphasis correctly 2`] = `
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ Test result                                                                  │
+│ 1 line — Test result  (Alt+E to expand)                                      │
 "
 `;
 
@@ -132,6 +132,7 @@ exports[`<ToolMessage /> > renders indeterminate progress when total is missing 
 │                                                                              │
 │ ███████░░░░░░░░░░░░░ 7                                                       │
 │ Test result                                                                  │
+│ 1 line so far…                                                               │
 "
 `;
 
@@ -141,5 +142,6 @@ exports[`<ToolMessage /> > renders only percentage when progressMessage is missi
 │                                                                              │
 │ ███████████████░░░░░ 75%                                                     │
 │ Test result                                                                  │
+│ 1 line so far…                                                               │
 "
 `;

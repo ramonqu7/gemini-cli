@@ -4,19 +4,26 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React from 'react';
+import type React from 'react';
 import { Box, Text } from 'ink';
 import {
   ToolResultDisplay,
   type ToolResultDisplayProps,
 } from './ToolResultDisplay.js';
 import { useSettings } from '../../contexts/SettingsContext.js';
+import { useUIState } from '../../contexts/UIStateContext.js';
 import { CoreToolCallStatus } from '@google/gemini-cli-core';
 import { theme } from '../../semantic-colors.js';
+import { formatCommand } from '../../utils/keybindingUtils.js';
+import { Command } from '../../../config/keyBindings.js';
 
 export interface CollapsibleToolResultProps extends ToolResultDisplayProps {
   /** Tool call status — errors are always shown expanded. */
   status: CoreToolCallStatus;
+  /** Tool name — used for context-aware summary. */
+  toolName?: string;
+  /** Tool description — used for content preview in collapsed view. */
+  toolDescription?: string;
 }
 
 /**
@@ -37,16 +44,26 @@ function countResultLines(
   return null;
 }
 
+const MAX_PREVIEW_LENGTH = 60;
+
 /**
- * Builds a compact summary of the tool output.
+ * Extracts a short first-line preview from string output.
+ */
+function getFirstLinePreview(text: string): string | null {
+  const trimmed = text.trimStart();
+  if (!trimmed) return null;
+  const firstLine = trimmed.split('\n')[0].trim();
+  if (!firstLine) return null;
+  if (firstLine.length <= MAX_PREVIEW_LENGTH) return firstLine;
+  return firstLine.slice(0, MAX_PREVIEW_LENGTH) + '…';
+}
+
+/**
+ * Builds a compact summary of the tool output with a content preview.
  */
 function formatSummary(
   resultDisplay: ToolResultDisplayProps['resultDisplay'],
 ): string {
-  const lineCount = countResultLines(resultDisplay);
-  if (lineCount !== null) {
-    return `${lineCount} line${lineCount !== 1 ? 's' : ''} of output`;
-  }
   if (
     resultDisplay &&
     typeof resultDisplay === 'object' &&
@@ -59,6 +76,25 @@ function formatSummary(
       return 'todos updated';
     }
   }
+
+  const lineCount = countResultLines(resultDisplay);
+  if (lineCount !== null) {
+    const countLabel = `${lineCount} line${lineCount !== 1 ? 's' : ''}`;
+    // Extract a first-line preview for context
+    let raw = '';
+    if (typeof resultDisplay === 'string') {
+      raw = resultDisplay;
+    } else if (Array.isArray(resultDisplay)) {
+      const first: unknown = resultDisplay[0];
+      raw = typeof first === 'string' ? first : '';
+    }
+    const preview = getFirstLinePreview(raw);
+    if (preview) {
+      return `${countLabel} — ${preview}`;
+    }
+    return `${countLabel} of output`;
+  }
+
   return 'completed';
 }
 
@@ -75,9 +111,12 @@ function formatSummary(
 export const CollapsibleToolResult: React.FC<CollapsibleToolResultProps> = ({
   status,
   resultDisplay,
+  toolName: _toolName,
+  toolDescription: _toolDescription,
   ...restProps
 }) => {
   const settings = useSettings();
+  const { toolOutputExpanded } = useUIState();
   const collapseByDefault = settings.merged.ui?.collapseToolOutput ?? true;
 
   const isError = status === CoreToolCallStatus.Error;
@@ -94,16 +133,34 @@ export const CollapsibleToolResult: React.FC<CollapsibleToolResultProps> = ({
     !hasNoResult &&
     status === CoreToolCallStatus.Success;
 
-  if (!shouldCollapse) {
+  // Show a live partial output count while the tool is executing
+  if (isExecuting && !hasNoResult) {
+    const lineCount = countResultLines(resultDisplay);
+    return (
+      <>
+        <ToolResultDisplay resultDisplay={resultDisplay} {...restProps} />
+        {lineCount !== null && lineCount > 0 && (
+          <Box height={1} overflow="hidden">
+            <Text color={theme.text.secondary} dimColor wrap="truncate">
+              {lineCount} line{lineCount !== 1 ? 's' : ''} so far…
+            </Text>
+          </Box>
+        )}
+      </>
+    );
+  }
+
+  if (!shouldCollapse || toolOutputExpanded) {
     return <ToolResultDisplay resultDisplay={resultDisplay} {...restProps} />;
   }
 
   const summary = formatSummary(resultDisplay);
+  const expandHint = formatCommand(Command.TOGGLE_TOOL_EXPAND);
 
   return (
     <Box height={1} overflow="hidden">
       <Text color={theme.text.secondary} wrap="truncate" dimColor>
-        {summary}
+        {summary} ({expandHint} to expand)
       </Text>
     </Box>
   );

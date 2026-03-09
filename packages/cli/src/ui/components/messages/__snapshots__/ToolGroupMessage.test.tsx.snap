@@ -13,7 +13,7 @@ exports[`<ToolGroupMessage /> > Ask User Filtering > filtering logic for status=
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  Ask User                                                              │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — test result  (Alt+E to expand)                                  │
 ╰──────────────────────────────────────────────────────────────────────────╯
 "
 `;
@@ -22,7 +22,7 @@ exports[`<ToolGroupMessage /> > Ask User Filtering > shows other tools when ask_
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  other-tool A tool for testing                                         │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — Test result  (Alt+E to expand)                                  │
 ╰──────────────────────────────────────────────────────────────────────────╯
 "
 `;
@@ -31,12 +31,13 @@ exports[`<ToolGroupMessage /> > Border Color Logic > uses gray border when all t
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                          │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — Test result  (Alt+E to expand)                                  │
 │                                                                          │
 │ ✓  another-tool A tool for testing                                       │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — Test result  (Alt+E to expand)                                  │
 ╰──────────────────────────────────────────────────────────────────────────╯
+ ✓ 2 tools completed in 0ms — 2 other tools
 "
 `;
 
@@ -44,7 +45,7 @@ exports[`<ToolGroupMessage /> > Border Color Logic > uses yellow border for shel
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  run_shell_command A tool for testing                                  │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — Test result  (Alt+E to expand)                                  │
 ╰──────────────────────────────────────────────────────────────────────────╯
 "
 `;
@@ -55,12 +56,13 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders header when scrolled 
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  tool-1 Description 1. This is a long description that will need to b… │
 │                                                                          │
-│ 5 lines of output                                                        │
+│ 5 lines — line1  (Alt+E to expand)                                       │
 │                                                                          │
 │ ✓  tool-2 Description 2                                                  │
 │                                                                          │
-│ 2 lines of output                                                        │
+│ 2 lines — line1  (Alt+E to expand)                                       │
 ╰──────────────────────────────────────────────────────────────────────────╯
+ ✓ 2 tools completed in 0ms — 2 other tools
 "
 `;
 
@@ -68,12 +70,14 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders mixed tool calls incl
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  read_file Read a file                                                 │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — Test result  (Alt+E to expand)                                  │
 │                                                                          │
 │ ⊶  run_shell_command Run command                                         │
 │                                                                          │
 │ Test result                                                              │
+│ 1 line so far…                                                           │
 ╰──────────────────────────────────────────────────────────────────────────╯
+ ⊶ 1 running, 1 completed
 "
 `;
 
@@ -81,12 +85,13 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders multiple tool calls w
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  successful-tool This tool succeeded                                   │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — Test result  (Alt+E to expand)                                  │
 │                                                                          │
 │ x  error-tool This tool failed                                           │
 │                                                                          │
 │ Test result                                                              │
 ╰──────────────────────────────────────────────────────────────────────────╯
+ ✓ 2 tools completed in 0ms — 2 other tools
 "
 `;
 
@@ -94,7 +99,7 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders single successful too
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                          │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — Test result  (Alt+E to expand)                                  │
 ╰──────────────────────────────────────────────────────────────────────────╯
 "
 `;
@@ -103,7 +108,7 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders tool call with output
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  tool-with-file Tool that saved output to file                         │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — Test result  (Alt+E to expand)                                  │
 │ Output too long and was saved to: /path/to/output.txt                    │
 ╰──────────────────────────────────────────────────────────────────────────╯
 "
@@ -114,7 +119,7 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders two tool groups where
 ╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  tool-2 Description 2                                                  │                       ▄
 │                                                                          │                       █
-│ 1 line of output                                                         │                       █
+│ 1 line — line1  (Alt+E to expand)                                        │                       █
 ╰──────────────────────────────────────────────────────────────────────────╯                       █
 "
 `;
@@ -123,12 +128,13 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders with limited terminal
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  tool-with-result Tool with output                                     │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — This is a long result that might need height constraints  (Alt… │
 │                                                                          │
 │ ✓  another-tool Another tool                                             │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — More output here  (Alt+E to expand)                             │
 ╰──────────────────────────────────────────────────────────────────────────╯
+ ✓ 2 tools completed in 0ms — 2 other tools
 "
 `;
 
@@ -136,7 +142,7 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders with narrow terminal 
 "╭──────────────────────────────────╮
 │ ✓  very-long-tool-name-that-mig… │
 │                                  │
-│ 1 line of output                 │
+│ 1 line — Test result  (Alt+E to… │
 ╰──────────────────────────────────╯
 "
 `;
@@ -145,14 +151,15 @@ exports[`<ToolGroupMessage /> > Height Calculation > calculates available height
 "╭──────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                          │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — Result 1  (Alt+E to expand)                                     │
 │                                                                          │
 │ ✓  test-tool A tool for testing                                          │
 │                                                                          │
-│ 1 line of output                                                         │
+│ 1 line — Result 2  (Alt+E to expand)                                     │
 │                                                                          │
 │ ✓  test-tool A tool for testing                                          │
 │                                                                          │
 ╰──────────────────────────────────────────────────────────────────────────╯
+ ✓ 3 tools completed in 0ms — 3 other tools
 "
 `;

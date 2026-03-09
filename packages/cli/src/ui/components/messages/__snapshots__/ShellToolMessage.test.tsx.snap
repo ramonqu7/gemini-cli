@@ -19,6 +19,7 @@ exports[`<ShellToolMessage /> > Height Constraints > defaults to ACTIVE_SHELL_MA
 │ Line 98                                                                    ▄ │
 │ Line 99                                                                    █ │
 │ Line 100                                                                   █ │
+│ 100 lines so far…                                                            │
 "
 `;
 
@@ -141,6 +142,7 @@ exports[`<ShellToolMessage /> > Height Constraints > respects availableTerminalH
 │ Line 98                                                                      │
 │ Line 99                                                                      │
 │ Line 100                                                                   █ │
+│ 100 lines so far…                                                            │
 "
 `;
 
@@ -185,6 +187,7 @@ exports[`<ShellToolMessage /> > Height Constraints > uses ACTIVE_SHELL_MAX_LINES
 │ Line 98                                                                    ▄ │
 │ Line 99                                                                    █ │
 │ Line 100                                                                   █ │
+│ 100 lines so far…                                                            │
 "
 `;
 
@@ -290,6 +293,7 @@ exports[`<ShellToolMessage /> > Height Constraints > uses full availableTerminal
 │ Line 98                                                                    █ │
 │ Line 99                                                                    █ │
 │ Line 100                                                                   █ │
+│ 100 lines so far…                                                            │
 "
 `;
 
@@ -298,6 +302,7 @@ exports[`<ShellToolMessage /> > Snapshots > renders in Alternate Buffer mode whi
 │ ⊶  Shell Command A shell command                      (Shift+Tab to unfocus) │
 │                                                                              │
 │ Test result                                                                  │
+│ 1 line so far…                                                               │
 "
 `;
 
@@ -306,6 +311,7 @@ exports[`<ShellToolMessage /> > Snapshots > renders in Alternate Buffer mode whi
 │ ⊶  Shell Command A shell command                                             │
 │                                                                              │
 │ Test result                                                                  │
+│ 1 line so far…                                                               │
 "
 `;
 
@@ -330,6 +336,7 @@ exports[`<ShellToolMessage /> > Snapshots > renders in Executing state 1`] = `
 │ ⊶  Shell Command A shell command                                             │
 │                                                                              │
 │ Test result                                                                  │
+│ 1 line so far…                                                               │
 "
 `;
 

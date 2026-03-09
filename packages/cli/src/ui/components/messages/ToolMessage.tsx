@@ -14,6 +14,7 @@ import {
   ToolInfo,
   TrailingIndicator,
   McpProgressIndicator,
+  ElapsedTimeIndicator,
   type TextEmphasis,
   STATUS_INDICATOR_WIDTH,
   isThisShellFocusable as checkIsShellFocusable,
@@ -23,6 +24,7 @@ import {
 } from './ToolShared.js';
 import { type Config, CoreToolCallStatus } from '@google/gemini-cli-core';
 import { ShellInputPrompt } from '../ShellInputPrompt.js';
+import { useElapsedTime } from '../../hooks/useElapsedTime.js';
 
 export type { TextEmphasis };
 
@@ -77,6 +79,8 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
     resultDisplay,
   );
 
+  const elapsed = useElapsedTime(status === CoreToolCallStatus.Executing);
+
   return (
     // It is crucial we don't replace this <> with a Box because otherwise the
     // sticky header inside it would be sticky to that box rather than to the
@@ -100,6 +104,7 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
           emphasis={emphasis}
           originalRequestName={originalRequestName}
         />
+        <ElapsedTimeIndicator elapsed={elapsed} />
         <FocusHint
           shouldShowFocusHint={shouldShowFocusHint}
           isThisShellFocused={isThisShellFocused}
@@ -133,6 +138,8 @@ export const ToolMessage: React.FC<ToolMessageProps> = ({
           terminalWidth={terminalWidth}
           renderOutputAsMarkdown={renderOutputAsMarkdown}
           hasFocus={isThisShellFocused}
+          toolName={name}
+          toolDescription={description}
         />
         {isThisShellFocused && config && (
           <Box paddingLeft={STATUS_INDICATOR_WIDTH} marginTop={1}>

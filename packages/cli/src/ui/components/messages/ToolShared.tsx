@@ -292,6 +292,22 @@ export const McpProgressIndicator: React.FC<McpProgressIndicatorProps> = ({
   );
 };
 
+export const ElapsedTimeIndicator: React.FC<{ elapsed: string | null }> = ({
+  elapsed,
+}) => {
+  if (!elapsed) {
+    return null;
+  }
+
+  return (
+    <Box marginLeft={1} flexShrink={0}>
+      <Text color={theme.text.secondary} dimColor>
+        ({elapsed})
+      </Text>
+    </Box>
+  );
+};
+
 export const TrailingIndicator: React.FC = () => (
   <Text color={theme.text.primary} wrap="truncate">
     {' '}
