@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build a self-extracting archive for your Gemini CLI fork.
-# Bundles the full workspace so npm package resolution works.
+# Uses the esbuild bundle for fast startup (~1s vs ~2s with unbundled dist/).
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -9,47 +9,21 @@ STAGING_DIR=$(mktemp -d)
 
 echo "=== Building Gemini CLI SAR package ==="
 
-# Step 1: Build
+# Step 1: Build (both dist/ and bundle/)
 echo "[1/4] Building CLI..."
 cd "${SCRIPT_DIR}"
 npm run build --silent 2>/dev/null
 
-# Step 2: Stage — include full workspace structure for module resolution
+# Step 2: Stage — use the single-file esbuild bundle for fast startup
 echo "[2/4] Staging files..."
 
-# Copy package.json (root) for workspace resolution
-cp package.json "${STAGING_DIR}/"
+# The bundle is a single ESM file with all dependencies inlined
+cp bundle/gemini.js "${STAGING_DIR}/gemini.js"
 
-# Copy built packages with their package.json
-for pkg in cli core sdk; do
-  mkdir -p "${STAGING_DIR}/packages/${pkg}"
-  cp -r "packages/${pkg}/dist" "${STAGING_DIR}/packages/${pkg}/"
-  cp "packages/${pkg}/package.json" "${STAGING_DIR}/packages/${pkg}/"
-done
-
-# Set up node_modules with workspace symlinks
-mkdir -p "${STAGING_DIR}/node_modules/@google"
-ln -s ../../../packages/core "${STAGING_DIR}/node_modules/@google/gemini-cli-core"
-ln -s ../../../packages/sdk "${STAGING_DIR}/node_modules/@google/gemini-cli-sdk"
-ln -s ../../../packages/cli "${STAGING_DIR}/node_modules/@google/gemini-cli"
-
-# Copy real (non-workspace) node_modules dependencies
-# Only copy what's needed — the @google/genai SDK and its deps
-for dep in $(ls node_modules/ | grep -v "^@$" | grep -v "^\."); do
-  if [[ -d "node_modules/${dep}" && ! -L "node_modules/${dep}" ]]; then
-    cp -r "node_modules/${dep}" "${STAGING_DIR}/node_modules/"
-  fi
-done
-# Copy scoped packages
-for scope in $(ls -d node_modules/@*/ 2>/dev/null); do
-  scope_name=$(basename "${scope}")
-  mkdir -p "${STAGING_DIR}/node_modules/${scope_name}"
-  for pkg in $(ls "${scope}"); do
-    if [[ -d "${scope}${pkg}" && ! -L "${scope}${pkg}" ]]; then
-      cp -r "${scope}${pkg}" "${STAGING_DIR}/node_modules/${scope_name}/"
-    fi
-  done
-done
+# Copy WASM files that can't be inlined by esbuild
+if ls bundle/*.wasm 2>/dev/null 1>&2; then
+  cp bundle/*.wasm "${STAGING_DIR}/"
+fi
 
 # Step 3: Create wrapper
 echo "[3/4] Creating wrapper..."
@@ -94,7 +68,7 @@ export GEMINI_TELEMETRY_TARGET=local
 export GEMINI_TELEMETRY_OTLP_PROTOCOL=http
 export GEMINI_TELEMETRY_OTLP_ENDPOINT="http://localhost:${PROXY_PORT}/logevent"
 
-exec node --no-deprecation "${RUNDIR}/packages/cli/dist/index.js" "$@"
+exec node --no-deprecation "${RUNDIR}/gemini.js" "$@"
 WRAPPER_EOF
 chmod +x "${STAGING_DIR}/run.sh"
 
