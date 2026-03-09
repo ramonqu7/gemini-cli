@@ -162,6 +162,24 @@ export class ShellToolInvocation extends BaseToolInvocation<
       };
     }
 
+    // Heredoc guard — heredocs in `bash -c` are unreliable for file creation
+    // because content with curly braces, backticks, or nested quotes breaks.
+    // Direct the model to use write_file instead.
+    if (/cat\s*<<\s*['"]?\w+['"]?\s*>/.test(strippedCommand)) {
+      const heredocMessage =
+        'Heredoc file creation via shell is unreliable (breaks on curly braces, backticks, nested quotes). ' +
+        'Use the write_file tool instead to create or overwrite files. ' +
+        'Use the replace tool to edit existing files.';
+      return {
+        llmContent: heredocMessage,
+        returnDisplay: heredocMessage,
+        error: {
+          message: heredocMessage,
+          type: ToolErrorType.SHELL_EXECUTE_ERROR,
+        },
+      };
+    }
+
     // Git safety check — enforced regardless of approval mode (even YOLO)
     const gitSafety = getGitSafetyService().checkCommand(strippedCommand);
     if (!gitSafety.allowed) {

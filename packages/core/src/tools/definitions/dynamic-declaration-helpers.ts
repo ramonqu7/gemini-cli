@@ -60,7 +60,10 @@ export function getShellToolDescription(
     const backgroundInstructions = enableInteractiveShell
       ? `To run a command in the background, set the \`${SHELL_PARAM_IS_BACKGROUND}\` parameter to true. Do NOT use \`&\` to background commands.`
       : 'Command can start background processes using `&`.';
-    return `This tool executes a given shell command as \`bash -c <command>\`. ${backgroundInstructions} Command is executed as a subprocess that leads its own process group. Command process group can be terminated as \`kill -- -PGID\` or signaled as \`kill -s SIGNAL -- -PGID\`.${efficiencyGuidelines}${returnedInfo}`;
+    return `This tool executes a given shell command as \`bash -c <command>\`. ${backgroundInstructions} Command is executed as a subprocess that leads its own process group. Command process group can be terminated as \`kill -- -PGID\` or signaled as \`kill -s SIGNAL -- -PGID\`.
+
+      IMPORTANT: Do NOT use heredocs (cat << 'EOF' > file) to create files — they break on curly braces, backticks, and nested quotes. Use the write_file tool instead.
+      If a command or test fails 2+ times, investigate the root cause (read the actual source, check error output) before retrying with minor variations.${efficiencyGuidelines}${returnedInfo}`;
   }
 }
 

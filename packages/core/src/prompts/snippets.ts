@@ -419,6 +419,8 @@ Guidelines for insights:
     options.interactive,
     options.interactiveShellEnabled,
   )}${toolUsageRememberingFacts(options)}${options.verifyPrompt ?? ''}${options.lintPrompt ?? ''}
+- **File Creation:** ALWAYS use ${formatToolName(WRITE_FILE_TOOL_NAME)} to create or overwrite files. NEVER use shell heredocs (\`cat << 'EOF' > file\`) — they break on curly braces, backticks, and nested quotes. Use ${formatToolName(EDIT_TOOL_NAME)} for modifying existing files.
+- **Debugging Discipline:** If a command or test fails 2+ times with similar errors, STOP and investigate the root cause (read the actual source code, examine error output, check documentation) before retrying with minor variations. Do not brute-force fixes with repeated \`sed\` commands.
 - **Confirmation Protocol:** If a tool call is declined or cancelled, respect the decision immediately. Do not re-attempt the action or "negotiate" for the same tool call unless the user explicitly directs you to. Offer an alternative technical path if possible.
 
 ## Production Debugging Protocol
