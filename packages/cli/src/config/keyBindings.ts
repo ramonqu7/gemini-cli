@@ -253,8 +253,8 @@ export const defaultKeyBindings: KeyBindingConfig = {
   [Command.BACKGROUND_SHELL_ESCAPE]: [{ key: 'escape' }],
   [Command.SHOW_MORE_LINES]: [{ key: 'o', ctrl: true }],
   [Command.TOGGLE_TOOL_EXPAND]: [
-    { key: 'e', alt: true },
     { key: 'e', ctrl: true, shift: true },
+    { key: 'e', alt: true },
   ],
   [Command.EXPAND_PASTE]: [{ key: 'o', ctrl: true }],
   [Command.FOCUS_SHELL_INPUT]: [{ key: 'tab' }],

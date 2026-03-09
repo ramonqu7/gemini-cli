@@ -31,7 +31,7 @@ const buildShortcutItems = (): ShortcutItem[] => {
     { key: `${altLabel}+M`, description: 'raw markdown mode' },
     { key: 'Ctrl+R', description: 'reverse-search history' },
     { key: 'Ctrl+X', description: 'open external editor' },
-    { key: `${altLabel}+E`, description: 'expand/collapse tool output' },
+    { key: 'Ctrl+Shift+E', description: 'expand/collapse tool output' },
   ];
 };
 
