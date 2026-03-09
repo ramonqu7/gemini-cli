@@ -1230,8 +1230,11 @@ export const useGeminiStream = (
       let geminiMessageBuffer = '';
       const toolCallRequests: ToolCallRequestInfo[] = [];
       for await (const event of stream) {
+        // Keep the thought visible during tool execution so users know what
+        // the model is working on. Only clear when actual content arrives
+        // (the model is now responding with text, not calling tools).
         if (
-          event.type !== ServerGeminiEventType.Thought &&
+          event.type === ServerGeminiEventType.Content &&
           thoughtRef.current !== null
         ) {
           setThought(null);
