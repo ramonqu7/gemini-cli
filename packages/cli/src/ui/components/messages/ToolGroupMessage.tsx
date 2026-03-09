@@ -94,6 +94,7 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
     embeddedShellFocused,
     backgroundShells,
     pendingHistoryItems,
+    thought,
   } = useUIState();
   const isAlternateBuffer = useAlternateBuffer();
 
@@ -258,6 +259,10 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
     return null;
   }
 
+  // Show the model's current thought/intent above the tool group when tools are running
+  const hasRunningTools = groupCounts !== null && groupCounts.running > 0;
+  const thoughtSubject = hasRunningTools ? thought?.subject : null;
+
   const content = (
     <Box
       flexDirection="column"
@@ -270,6 +275,14 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
       width={terminalWidth}
       paddingRight={TOOL_MESSAGE_HORIZONTAL_MARGIN}
     >
+      {thoughtSubject && (
+        <Box paddingLeft={1} height={1} overflow="hidden" marginBottom={0}>
+          <Text color={theme.text.secondary} italic wrap="truncate">
+            {'💬 '}
+            {thoughtSubject}
+          </Text>
+        </Box>
+      )}
       {visibleToolCalls.map((tool, index) => {
         const isFirst = index === 0;
         const isShellToolCall = isShellTool(tool.name);
