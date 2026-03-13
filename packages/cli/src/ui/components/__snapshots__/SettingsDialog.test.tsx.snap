@@ -16,7 +16,7 @@ exports[`SettingsDialog > Initial Rendering > should render settings list with v
 │    Default Approval Mode                                                                Default  │
 │    The default approval mode for tool execution. 'default' prompts for approval, 'au…            │
 │                                                                                                  │
-│    Enable Auto Update                                                                      true  │
+│    Enable Auto Update                                                                     false  │
 │    Enable automatic updates.                                                                     │
 │                                                                                                  │
 │    Enable Notifications                                                                   false  │
@@ -62,7 +62,7 @@ exports[`SettingsDialog > Snapshot Tests > should render 'accessibility settings
 │    Default Approval Mode                                                                Default  │
 │    The default approval mode for tool execution. 'default' prompts for approval, 'au…            │
 │                                                                                                  │
-│    Enable Auto Update                                                                      true  │
+│    Enable Auto Update                                                                     false  │
 │    Enable automatic updates.                                                                     │
 │                                                                                                  │
 │    Enable Notifications                                                                   false  │
@@ -154,7 +154,7 @@ exports[`SettingsDialog > Snapshot Tests > should render 'default state' correct
 │    Default Approval Mode                                                                Default  │
 │    The default approval mode for tool execution. 'default' prompts for approval, 'au…            │
 │                                                                                                  │
-│    Enable Auto Update                                                                      true  │
+│    Enable Auto Update                                                                     false  │
 │    Enable automatic updates.                                                                     │
 │                                                                                                  │
 │    Enable Notifications                                                                   false  │
@@ -200,7 +200,7 @@ exports[`SettingsDialog > Snapshot Tests > should render 'file filtering setting
 │    Default Approval Mode                                                                Default  │
 │    The default approval mode for tool execution. 'default' prompts for approval, 'au…            │
 │                                                                                                  │
-│    Enable Auto Update                                                                      true  │
+│    Enable Auto Update                                                                     false  │
 │    Enable automatic updates.                                                                     │
 │                                                                                                  │
 │    Enable Notifications                                                                   false  │
@@ -246,7 +246,7 @@ exports[`SettingsDialog > Snapshot Tests > should render 'focused on scope selec
 │    Default Approval Mode                                                                Default  │
 │    The default approval mode for tool execution. 'default' prompts for approval, 'au…            │
 │                                                                                                  │
-│    Enable Auto Update                                                                      true  │
+│    Enable Auto Update                                                                     false  │
 │    Enable automatic updates.                                                                     │
 │                                                                                                  │
 │    Enable Notifications                                                                   false  │
@@ -338,7 +338,7 @@ exports[`SettingsDialog > Snapshot Tests > should render 'tools and security set
 │    Default Approval Mode                                                                Default  │
 │    The default approval mode for tool execution. 'default' prompts for approval, 'au…            │
 │                                                                                                  │
-│    Enable Auto Update                                                                      true  │
+│    Enable Auto Update                                                                     false  │
 │    Enable automatic updates.                                                                     │
 │                                                                                                  │
 │    Enable Notifications                                                                   false  │

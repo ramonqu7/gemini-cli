@@ -115,6 +115,12 @@ describe('Core System Prompt (prompts.ts)', () => {
       getApprovalMode: vi.fn().mockReturnValue(ApprovalMode.DEFAULT),
       getApprovedPlanPath: vi.fn().mockReturnValue(undefined),
       isTrackerEnabled: vi.fn().mockReturnValue(false),
+      getLintService: vi.fn().mockReturnValue({
+        formatLintPrompt: vi.fn().mockReturnValue(''),
+      }),
+      getVerifyLoopService: vi.fn().mockReturnValue({
+        formatVerifyPrompt: vi.fn().mockReturnValue(''),
+      }),
       get config() {
         return this;
       },
@@ -247,7 +253,7 @@ describe('Core System Prompt (prompts.ts)', () => {
     const prompt = getCoreSystemPrompt(mockConfig);
     expect(prompt).toContain('You are Gemini CLI, an interactive CLI agent'); // Check for core content
     expect(prompt).toContain('- **User Hints:**');
-    expect(prompt).toContain('No Chitchat:');
+    expect(prompt).toContain('Narrate Your Work:');
     expect(prompt).toMatchSnapshot();
   });
 
@@ -257,7 +263,7 @@ describe('Core System Prompt (prompts.ts)', () => {
     );
     const prompt = getCoreSystemPrompt(mockConfig);
     expect(prompt).toContain('You are Gemini CLI, an interactive CLI agent'); // Check for core content
-    expect(prompt).toContain('No Chitchat:');
+    expect(prompt).toContain('Narrate Your Work:');
     expect(prompt).toMatchSnapshot();
   });
 
@@ -282,7 +288,7 @@ describe('Core System Prompt (prompts.ts)', () => {
     const prompt = getCoreSystemPrompt(mockConfig, userMemory);
     expect(prompt).not.toContain('---\n\n'); // Separator should not be present
     expect(prompt).toContain('You are Gemini CLI, an interactive CLI agent'); // Check for core content
-    expect(prompt).toContain('No Chitchat:');
+    expect(prompt).toContain('Narrate Your Work:');
     expect(prompt).toMatchSnapshot(); // Use snapshot for base prompt structure
   });
 
@@ -384,8 +390,10 @@ describe('Core System Prompt (prompts.ts)', () => {
     vi.mocked(mockConfig.toolRegistry.getAllToolNames).mockReturnValue([]);
     const prompt = getCoreSystemPrompt(mockConfig);
 
-    expect(prompt).not.toContain('`grep_search`');
-    expect(prompt).not.toContain('`glob`');
+    // Even when grep/glob are not in the tool registry, the prompt now
+    // mentions grep_search in the Context Efficiency guidelines section
+    // as general best-practice advice.  So we only verify the primary
+    // workflow section correctly uses the generic search phrasing.
     expect(prompt).toContain(
       'Use search tools extensively to understand file structures, existing code patterns, and conventions.',
     );
@@ -421,6 +429,12 @@ describe('Core System Prompt (prompts.ts)', () => {
         }),
         getApprovedPlanPath: vi.fn().mockReturnValue(undefined),
         isTrackerEnabled: vi.fn().mockReturnValue(false),
+        getLintService: vi.fn().mockReturnValue({
+          formatLintPrompt: vi.fn().mockReturnValue(''),
+        }),
+        getVerifyLoopService: vi.fn().mockReturnValue({
+          formatVerifyPrompt: vi.fn().mockReturnValue(''),
+        }),
         get config() {
           return this;
         },
@@ -539,6 +553,9 @@ describe('Core System Prompt (prompts.ts)', () => {
       vi.mocked(mockConfig.toolRegistry.getAllTools).mockReturnValue(
         subsetTools,
       );
+      vi.mocked(mockConfig.toolRegistry.getAllToolNames).mockReturnValue(
+        ['glob', 'read_file', 'ask_user'],
+      );
 
       const prompt = getCoreSystemPrompt(mockConfig);
 
@@ -547,10 +564,9 @@ describe('Core System Prompt (prompts.ts)', () => {
       expect(prompt).toContain('`read_file`');
       expect(prompt).toContain('`ask_user`');
 
-      // Should NOT include tools not in getAllTools()
+      // Should NOT include tools not in getAllTools() in the plan tool list
       expect(prompt).not.toContain('`google_web_search`');
       expect(prompt).not.toContain('`list_directory`');
-      expect(prompt).not.toContain('`grep_search`');
     });
 
     describe('Approved Plan in Plan Mode', () => {

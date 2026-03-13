@@ -48,7 +48,7 @@
     <text x="891" y="240" fill="#878787" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
     <text x="0" y="257" fill="#878787" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
     <text x="45" y="257" fill="#ffffff" textLength="162" lengthAdjust="spacingAndGlyphs">Enable Auto Update</text>
-    <text x="837" y="257" fill="#afafaf" textLength="36" lengthAdjust="spacingAndGlyphs">true</text>
+    <text x="828" y="257" fill="#afafaf" textLength="45" lengthAdjust="spacingAndGlyphs">false</text>
     <text x="891" y="257" fill="#878787" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
     <text x="0" y="274" fill="#878787" textLength="9" lengthAdjust="spacingAndGlyphs">│</text>
     <text x="45" y="274" fill="#afafaf" textLength="225" lengthAdjust="spacingAndGlyphs">Enable automatic updates.</text>

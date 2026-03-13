@@ -3,6 +3,9 @@
 exports[`ShellTool > getDescription > should return the non-windows description when not on windows 1`] = `
 "This tool executes a given shell command as \`bash -c <command>\`. Command can start background processes using \`&\`. Command is executed as a subprocess that leads its own process group. Command process group can be terminated as \`kill -- -PGID\` or signaled as \`kill -s SIGNAL -- -PGID\`.
 
+      IMPORTANT: Do NOT use heredocs (cat << 'EOF' > file) to create files — they break on curly braces, backticks, and nested quotes. Use the write_file tool instead.
+      If a command or test fails 2+ times, investigate the root cause (read the actual source, check error output) before retrying with minor variations.
+
       Efficiency Guidelines:
       - Quiet Flags: Always prefer silent or quiet flags (e.g., \`npm install --silent\`, \`git --no-pager\`) to reduce output volume while still capturing necessary information.
       - Pagination: Always disable terminal pagination to ensure commands terminate (e.g., use \`git --no-pager\`, \`systemctl --no-pager\`, or set \`PAGER=cat\`).
@@ -37,6 +40,9 @@ exports[`ShellTool > getDescription > should return the windows description when
 exports[`ShellTool > getSchema > should return the base schema when no modelId is provided 1`] = `
 "This tool executes a given shell command as \`bash -c <command>\`. Command can start background processes using \`&\`. Command is executed as a subprocess that leads its own process group. Command process group can be terminated as \`kill -- -PGID\` or signaled as \`kill -s SIGNAL -- -PGID\`.
 
+      IMPORTANT: Do NOT use heredocs (cat << 'EOF' > file) to create files — they break on curly braces, backticks, and nested quotes. Use the write_file tool instead.
+      If a command or test fails 2+ times, investigate the root cause (read the actual source, check error output) before retrying with minor variations.
+
       Efficiency Guidelines:
       - Quiet Flags: Always prefer silent or quiet flags (e.g., \`npm install --silent\`, \`git --no-pager\`) to reduce output volume while still capturing necessary information.
       - Pagination: Always disable terminal pagination to ensure commands terminate (e.g., use \`git --no-pager\`, \`systemctl --no-pager\`, or set \`PAGER=cat\`).
@@ -53,6 +59,9 @@ exports[`ShellTool > getSchema > should return the base schema when no modelId i
 
 exports[`ShellTool > getSchema > should return the schema from the resolver when modelId is provided 1`] = `
 "This tool executes a given shell command as \`bash -c <command>\`. Command can start background processes using \`&\`. Command is executed as a subprocess that leads its own process group. Command process group can be terminated as \`kill -- -PGID\` or signaled as \`kill -s SIGNAL -- -PGID\`.
+
+      IMPORTANT: Do NOT use heredocs (cat << 'EOF' > file) to create files — they break on curly braces, backticks, and nested quotes. Use the write_file tool instead.
+      If a command or test fails 2+ times, investigate the root cause (read the actual source, check error output) before retrying with minor variations.
 
       Efficiency Guidelines:
       - Quiet Flags: Always prefer silent or quiet flags (e.g., \`npm install --silent\`, \`git --no-pager\`) to reduce output volume while still capturing necessary information.

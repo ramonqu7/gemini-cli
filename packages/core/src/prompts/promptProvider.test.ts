@@ -70,6 +70,12 @@ describe('PromptProvider', () => {
       getApprovedPlanPath: vi.fn().mockReturnValue(undefined),
       getApprovalMode: vi.fn(),
       isTrackerEnabled: vi.fn().mockReturnValue(false),
+      getLintService: vi.fn().mockReturnValue({
+        formatLintPrompt: vi.fn().mockReturnValue(''),
+      }),
+      getVerifyLoopService: vi.fn().mockReturnValue({
+        formatVerifyPrompt: vi.fn().mockReturnValue(''),
+      }),
     } as unknown as Config;
   });
 

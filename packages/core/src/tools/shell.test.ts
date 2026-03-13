@@ -137,6 +137,9 @@ describe('ShellTool', () => {
       getEnableInteractiveShell: vi.fn().mockReturnValue(false),
       getEnableShellOutputEfficiency: vi.fn().mockReturnValue(true),
       sanitizationConfig: {},
+      getGitSafetyService: vi.fn().mockReturnValue({
+        checkCommand: vi.fn().mockReturnValue({ allowed: true }),
+      }),
     } as unknown as Config;
 
     const bus = createMockMessageBus();

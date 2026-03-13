@@ -4,7 +4,10 @@ exports[`<ToolMessage /> > JSON rendering > renders pretty JSON in ink frame 1`]
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ 1 line — {"a":1,"b":2}  (Alt+E to expand)                                    │
+│ {                                                                            │
+│   "a": 1,                                                                    │
+│   "b": 2                                                                     │
+│ }                                                                            │
 "
 `;
 
@@ -71,7 +74,7 @@ exports[`<ToolMessage /> > ToolStatusIndicator rendering > shows ✓ for Success
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ 1 line — Test result  (Alt+E to expand)                                      │
+│ Test result                                                                  │
 "
 `;
 
@@ -79,7 +82,7 @@ exports[`<ToolMessage /> > renders AnsiOutputText for AnsiOutput results 1`] = `
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ 1 line — [object Object]  (Alt+E to expand)                                  │
+│ hello                                                                        │
 "
 `;
 
@@ -87,7 +90,8 @@ exports[`<ToolMessage /> > renders DiffRenderer for diff results 1`] = `
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ file diff  (Alt+E to expand)                                                 │
+│ 1 - old                                                                      │
+│ 1 + new                                                                      │
 "
 `;
 
@@ -106,7 +110,7 @@ exports[`<ToolMessage /> > renders basic tool information 1`] = `
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ 1 line — Test result  (Alt+E to expand)                                      │
+│ Test result                                                                  │
 "
 `;
 
@@ -114,7 +118,7 @@ exports[`<ToolMessage /> > renders emphasis correctly 1`] = `
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                            ← │
 │                                                                              │
-│ 1 line — Test result  (Alt+E to expand)                                      │
+│ Test result                                                                  │
 "
 `;
 
@@ -122,7 +126,7 @@ exports[`<ToolMessage /> > renders emphasis correctly 2`] = `
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓  test-tool A tool for testing                                              │
 │                                                                              │
-│ 1 line — Test result  (Alt+E to expand)                                      │
+│ Test result                                                                  │
 "
 `;
 

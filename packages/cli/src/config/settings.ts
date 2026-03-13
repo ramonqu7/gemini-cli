@@ -622,17 +622,25 @@ export function loadEnvironment(
 }
 
 // Cache to store the results of loadSettings to avoid redundant disk I/O.
-const settingsCache = createCache<string, LoadedSettings>({
-  storage: 'map',
-  defaultTtl: 10000, // 10 seconds
-});
+// Lazily initialized to avoid calling createCache at module load time,
+// which breaks tests that mock @google/gemini-cli-core.
+let settingsCache: ReturnType<typeof createCache<string, LoadedSettings>> | null = null;
+function getSettingsCache() {
+  if (!settingsCache) {
+    settingsCache = createCache<string, LoadedSettings>({
+      storage: 'map',
+      defaultTtl: 10000, // 10 seconds
+    });
+  }
+  return settingsCache;
+}
 
 /**
  * Resets the settings cache. Used exclusively for test isolation.
  * @internal
  */
 export function resetSettingsCacheForTesting() {
-  settingsCache.clear();
+  settingsCache?.clear();
 }
 
 /**
@@ -643,7 +651,7 @@ export function loadSettings(
   workspaceDir: string = process.cwd(),
 ): LoadedSettings {
   const normalizedWorkspaceDir = path.resolve(workspaceDir);
-  return settingsCache.getOrCreate(normalizedWorkspaceDir, () =>
+  return getSettingsCache().getOrCreate(normalizedWorkspaceDir, () =>
     _doLoadSettings(normalizedWorkspaceDir),
   );
 }
@@ -1060,7 +1068,7 @@ export function migrateDeprecatedSettings(
 
 export function saveSettings(settingsFile: SettingsFile): void {
   // Clear the entire cache on any save.
-  settingsCache.clear();
+  settingsCache?.clear();
 
   try {
     // Ensure the directory exists

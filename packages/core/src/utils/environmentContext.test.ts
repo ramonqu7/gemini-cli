@@ -92,6 +92,10 @@ describe('getEnvironmentContext', () => {
       getEnvironmentMemory: vi.fn().mockReturnValue('Mock Environment Memory'),
 
       getToolRegistry: vi.fn().mockReturnValue(mockToolRegistry),
+      getWorkingDir: vi.fn().mockReturnValue('/test/dir'),
+      getKnowledgeBaseService: vi.fn().mockReturnValue({
+        formatKnowledgeContext: vi.fn().mockResolvedValue(''),
+      }),
       storage: {
         getProjectTempDir: vi.fn().mockReturnValue('/tmp/project-temp'),
       } as unknown as Storage,

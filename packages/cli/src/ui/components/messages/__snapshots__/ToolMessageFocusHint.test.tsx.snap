@@ -4,6 +4,7 @@ exports[`Focus Hint > 'ShellToolMessage' > shows focus hint after delay even wit
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ⊶  Shell Command A tool for testing                      (5s) (Tab to focus) │
 │                                                                              │
+│ A tool for testing                                                           │
 "
 `;
 
@@ -11,6 +12,7 @@ exports[`Focus Hint > 'ShellToolMessage' > shows focus hint after delay even wit
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ⊶  Shell Command A tool for testing                                          │
 │                                                                              │
+│ A tool for testing                                                           │
 "
 `;
 
@@ -34,6 +36,7 @@ exports[`Focus Hint > 'ToolMessage' > shows focus hint after delay even with NO 
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ⊶  Shell Command A tool for testing                      (5s) (Tab to focus) │
 │                                                                              │
+│ A tool for testing                                                           │
 "
 `;
 
@@ -41,6 +44,7 @@ exports[`Focus Hint > 'ToolMessage' > shows focus hint after delay even with NO 
 "╭──────────────────────────────────────────────────────────────────────────────╮
 │ ⊶  Shell Command A tool for testing                                          │
 │                                                                              │
+│ A tool for testing                                                           │
 "
 `;
 

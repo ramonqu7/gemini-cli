@@ -280,6 +280,21 @@ describe('Gemini Client (client.ts)', () => {
       getModelAvailabilityService: vi
         .fn()
         .mockReturnValue(createAvailabilityServiceMock()),
+      getKnowledgeBaseService: vi.fn().mockReturnValue({
+        formatKnowledgeContext: vi.fn().mockResolvedValue(''),
+      }),
+      getBackgroundIngestionService: vi.fn().mockReturnValue({
+        formatIngestionContext: vi.fn().mockReturnValue(''),
+      }),
+      getAutoMemoryService: vi.fn().mockReturnValue({
+        isEnabled: vi.fn().mockReturnValue(false),
+        fireAndForget: vi.fn(),
+      }),
+      getTargetDir: vi.fn().mockReturnValue('/test/dir'),
+      getDynamicContextService: vi.fn().mockReturnValue({
+        getContextSnapshot: vi.fn().mockResolvedValue(''),
+      }),
+      getStateSnapshotService: vi.fn().mockReturnValue(undefined),
     } as unknown as Config;
     mockConfig.getHookSystem = vi.fn().mockReturnValue(mockHookSystem);
 

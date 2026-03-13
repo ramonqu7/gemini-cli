@@ -11,6 +11,7 @@ exports[`MainContent tool group border SVG snapshots > should render SVG snapsho
 │ ⊶  google_web_search                                                                         │
 │                                                                                              │
 │ Searching...                                                                                 │
+│ 1 line so far…                                                                               │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯"
 `;
 
@@ -25,6 +26,7 @@ exports[`MainContent tool group border SVG snapshots > should render SVG snapsho
 │ ⊶  run_shell_command                                                                         │
 │                                                                                              │
 │ Running command...                                                                           │
+│ 1 line so far…                                                                               │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯"
 `;
 
@@ -39,5 +41,6 @@ exports[`MainContent tool group border SVG snapshots > should render SVG snapsho
 │ ⊶  google_web_search                                                                         │
 │                                                                                              │
 │ Searching...                                                                                 │
+│ 1 line so far…                                                                               │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯"
 `;

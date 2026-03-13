@@ -17,7 +17,9 @@ AppHeader(full)
 │ Line 18                                                                                    █ │
 │ Line 19                                                                                    █ │
 │ Line 20                                                                                    █ │
+│ 20 lines so far…                                                                             │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+ Press Ctrl+O to show more lines
 "
 `;
 
@@ -38,7 +40,9 @@ AppHeader(full)
 │ Line 18                                                                                    █ │
 │ Line 19                                                                                    █ │
 │ Line 20                                                                                    █ │
+│ 20 lines so far…                                                                             │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+ Press Ctrl+O to show more lines
 "
 `;
 
@@ -57,7 +61,9 @@ exports[`MainContent > MainContent Tool Output Height Logic > 'Normal mode - Con
 │ Line 18                                                                                      │
 │ Line 19                                                                                      │
 │ Line 20                                                                                      │
+│ 20 lines so far…                                                                             │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
+ Press Ctrl+O to show more lines
 "
 `;
 
@@ -86,6 +92,7 @@ exports[`MainContent > MainContent Tool Output Height Logic > 'Normal mode - Unc
 │ Line 18                                                                                      │
 │ Line 19                                                                                      │
 │ Line 20                                                                                      │
+│ 20 lines so far…                                                                             │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────╯
 "
 `;
