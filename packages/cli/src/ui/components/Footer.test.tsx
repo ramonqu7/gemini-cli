@@ -296,7 +296,7 @@ describe('<Footer />', () => {
       },
     );
     await waitUntilReady();
-    expect(normalizeFrame(lastFrame())).not.toContain('used');
+    expect(normalizeFrame(lastFrame())).not.toContain('Limit reached');
     expect(normalizeFrame(lastFrame())).toMatchSnapshot();
     unmount();
   });

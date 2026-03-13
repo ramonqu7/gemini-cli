@@ -92,6 +92,7 @@ export class LocalSubagentInvocation extends BaseToolInvocation<
     updateOutput?: (output: ToolLiveOutput) => void,
   ): Promise<ToolResult> {
     let recentActivity: SubagentActivityItem[] = [];
+    let tokenCount = 0;
 
     try {
       if (updateOutput) {
@@ -113,6 +114,14 @@ export class LocalSubagentInvocation extends BaseToolInvocation<
         let updated = false;
 
         switch (activity.type) {
+          case 'TOKEN_UPDATE': {
+            const total = Number(activity.data['totalTokenCount']) || 0;
+            if (total > tokenCount) {
+              tokenCount = total;
+            }
+            updated = true;
+            break;
+          }
           case 'THOUGHT_CHUNK': {
             const text = String(activity.data['text']);
             const lastItem = recentActivity[recentActivity.length - 1];
@@ -215,6 +224,7 @@ export class LocalSubagentInvocation extends BaseToolInvocation<
             agentName: this.definition.name,
             recentActivity: [...recentActivity], // Copy to avoid mutation issues
             state: 'running',
+            ...(tokenCount > 0 && { tokenCount }),
           };
 
           updateOutput(progress);
@@ -235,6 +245,7 @@ export class LocalSubagentInvocation extends BaseToolInvocation<
           agentName: this.definition.name,
           recentActivity: [...recentActivity],
           state: 'cancelled',
+          ...(tokenCount > 0 && { tokenCount }),
         };
 
         if (updateOutput) {
@@ -307,6 +318,7 @@ ${displayResult}
         agentName: this.definition.name,
         recentActivity: [...recentActivity],
         state: isAbort ? 'cancelled' : 'error',
+        ...(tokenCount > 0 && { tokenCount }),
       };
 
       if (updateOutput) {

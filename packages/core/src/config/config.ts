@@ -172,6 +172,7 @@ import { GitSafetyService } from '../services/gitSafetyService.js';
 import { KnowledgeBaseService } from '../services/knowledgeBaseService.js';
 import { RepoMapService } from '../services/repoMapService.js';
 import { ToolOutputFormatterService } from '../services/toolOutputFormatterService.js';
+import { ConversationBranchService } from '../services/conversationBranchService.js';
 
 export interface AccessibilitySettings {
   /** @deprecated Use ui.loadingPhrases instead. */
@@ -754,6 +755,7 @@ export class Config implements McpContext, AgentLoopContext {
   private budgetEnforcer: BudgetEnforcerService | null = null;
   private scopeEnforcer: ScopeEnforcerService | null = null;
   private toolPermissionService: ToolPermissionService | null = null;
+  private conversationBranchService: ConversationBranchService | null = null;
 
   private _activeModel: string;
   private readonly maxSessionTurns: number;
@@ -2641,6 +2643,13 @@ export class Config implements McpContext, AgentLoopContext {
 
   getCronService(): CronService | null {
     return this.cronService;
+  }
+
+  getConversationBranchService(): ConversationBranchService {
+    if (!this.conversationBranchService) {
+      this.conversationBranchService = new ConversationBranchService();
+    }
+    return this.conversationBranchService;
   }
 
   getBudgetEnforcer(): BudgetEnforcerService | null {

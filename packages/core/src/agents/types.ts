@@ -67,7 +67,12 @@ export type RemoteAgentInputs = { query: string };
 export interface SubagentActivityEvent {
   isSubagentActivityEvent: true;
   agentName: string;
-  type: 'TOOL_CALL_START' | 'TOOL_CALL_END' | 'THOUGHT_CHUNK' | 'ERROR';
+  type:
+    | 'TOOL_CALL_START'
+    | 'TOOL_CALL_END'
+    | 'THOUGHT_CHUNK'
+    | 'ERROR'
+    | 'TOKEN_UPDATE';
   data: Record<string, unknown>;
 }
 
@@ -86,6 +91,8 @@ export interface SubagentProgress {
   agentName: string;
   recentActivity: SubagentActivityItem[];
   state?: 'running' | 'completed' | 'error' | 'cancelled';
+  /** Cumulative token count for this agent's session. */
+  tokenCount?: number;
 }
 
 export function isSubagentProgress(obj: unknown): obj is SubagentProgress {

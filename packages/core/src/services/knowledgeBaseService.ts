@@ -126,15 +126,30 @@ const PREFERENCE_PATTERNS: Array<{
   },
 ];
 
-// Build/test command detection patterns
+// Build/test command detection patterns — matched against raw shell commands
 const BUILD_COMMAND_PATTERNS = [
-  /(?:build\s+(?:command|with|using)|to\s+build[,:]?)\s+[`"]?([a-zA-Z][\w\s./-]+)[`"]?/i,
-  /(?:run|execute)\s+[`"]?((?:npm|yarn|pnpm|make|cargo|go|bazel|gradle|mvn|blaze)\s+\S+)[`"]?/i,
+  /\b(?:npm|yarn|pnpm)\s+(?:run\s+)?build\b/i,
+  /\bmake\b(?:\s+\w+)*/i,
+  /\bcargo\s+build\b/i,
+  /\bgo\s+build\b/i,
+  /\b(?:bazel|blaze)\s+build\b/i,
+  /\bgradle\s+build\b/i,
+  /\bmvn\s+(?:compile|package|install)\b/i,
+  /\bcmake\s+--build\b/i,
+  /\bant\s+build\b/i,
 ];
 
 const TEST_COMMAND_PATTERNS = [
-  /(?:test\s+(?:command|with|using)|to\s+test[,:]?)\s+[`"]?([a-zA-Z][\w\s./-]+)[`"]?/i,
-  /(?:run\s+tests?\s+(?:with|using))\s+[`"]?(\S+)[`"]?/i,
+  /\b(?:npm|yarn|pnpm)\s+(?:run\s+)?test\b/i,
+  /\bcargo\s+test\b/i,
+  /\bgo\s+test\b/i,
+  /\b(?:bazel|blaze)\s+test\b/i,
+  /\bgradle\s+test\b/i,
+  /\bmvn\s+(?:test|verify)\b/i,
+  /\bpytest\b/i,
+  /\bjest\b/i,
+  /\bvitest\b/i,
+  /\bmake\s+test\b/i,
 ];
 
 // ---------------------------------------------------------------------------
@@ -395,7 +410,7 @@ export class KnowledgeBaseService {
    * project-specific knowledge.
    */
   async getRelevantKnowledge(
-    _userPrompt: string,
+    userPrompt: string,
     projectPath: string,
   ): Promise<string> {
     try {
@@ -405,9 +420,29 @@ export class KnowledgeBaseService {
         this.loadRecentCorrections(10),
       ]);
 
+      // Extract keywords from the user prompt for relevance scoring
+      const keywords = userPrompt
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter((w) => w.length > 2);
+
+      const hasKeywords = keywords.length > 0;
+
+      /**
+       * Returns true if `text` contains at least one keyword from the prompt.
+       * When there are no keywords (empty prompt), everything is considered
+       * relevant so existing behaviour is preserved for `formatKnowledgeContext`.
+       */
+      const isRelevant = (text: string): boolean => {
+        if (!hasKeywords) return true;
+        const lower = text.toLowerCase();
+        return keywords.some((kw) => lower.includes(kw));
+      };
+
       const sections: string[] = [];
 
-      // User preferences
+      // User preferences — always include (lightweight, high-signal)
       if (profile.preferredLanguages.length > 0) {
         sections.push(
           `Preferred languages: ${profile.preferredLanguages.join(', ')}`,
@@ -415,9 +450,12 @@ export class KnowledgeBaseService {
       }
       if (Object.keys(profile.codingStyle).length > 0) {
         const styleEntries = Object.entries(profile.codingStyle)
+          .filter(([k, v]) => !hasKeywords || isRelevant(`${k} ${v}`))
           .map(([k, v]) => `${k}: ${v}`)
           .join(', ');
-        sections.push(`Coding style: ${styleEntries}`);
+        if (styleEntries) {
+          sections.push(`Coding style: ${styleEntries}`);
+        }
       }
       if (profile.preferredTools.length > 0) {
         sections.push(
@@ -430,36 +468,47 @@ export class KnowledgeBaseService {
         );
       }
 
-      // Recent corrections
+      // Recent corrections — filter by relevance
       if (corrections.length > 0) {
-        const correctionLines = corrections.map((c) => {
-          if (c.from && c.to) return `"${c.from}" -> "${c.to}"`;
-          if (c.to) return `Use: ${c.to}`;
-          if (c.from) return `Avoid: ${c.from}`;
-          return c.raw;
-        });
-        sections.push(
-          `Previous corrections:\n${correctionLines.map((l) => `  - ${l}`).join('\n')}`,
+        const relevantCorrections = corrections.filter((c) =>
+          isRelevant(`${c.from} ${c.to} ${c.raw}`),
         );
+        if (relevantCorrections.length > 0) {
+          const correctionLines = relevantCorrections.map((c) => {
+            if (c.from && c.to) return `"${c.from}" -> "${c.to}"`;
+            if (c.to) return `Use: ${c.to}`;
+            if (c.from) return `Avoid: ${c.from}`;
+            return c.raw;
+          });
+          sections.push(
+            `Previous corrections:\n${correctionLines.map((l) => `  - ${l}`).join('\n')}`,
+          );
+        }
       }
 
-      // Project knowledge
+      // Project knowledge — filter notes and issues by relevance
       if (projectKnowledge.projectName) {
-        if (projectKnowledge.buildCommand) {
+        if (projectKnowledge.buildCommand && isRelevant(`build ${projectKnowledge.buildCommand}`)) {
           sections.push(`Build command: ${projectKnowledge.buildCommand}`);
         }
-        if (projectKnowledge.testCommand) {
+        if (projectKnowledge.testCommand && isRelevant(`test ${projectKnowledge.testCommand}`)) {
           sections.push(`Test command: ${projectKnowledge.testCommand}`);
         }
         if (projectKnowledge.architectureNotes.length > 0) {
-          sections.push(
-            `Architecture notes:\n${projectKnowledge.architectureNotes.map((n) => `  - ${n}`).join('\n')}`,
-          );
+          const relevantNotes = projectKnowledge.architectureNotes.filter(isRelevant);
+          if (relevantNotes.length > 0) {
+            sections.push(
+              `Architecture notes:\n${relevantNotes.map((n) => `  - ${n}`).join('\n')}`,
+            );
+          }
         }
         if (projectKnowledge.commonIssues.length > 0) {
-          sections.push(
-            `Known issues:\n${projectKnowledge.commonIssues.map((i) => `  - ${i}`).join('\n')}`,
-          );
+          const relevantIssues = projectKnowledge.commonIssues.filter(isRelevant);
+          if (relevantIssues.length > 0) {
+            sections.push(
+              `Known issues:\n${relevantIssues.map((i) => `  - ${i}`).join('\n')}`,
+            );
+          }
         }
       }
 

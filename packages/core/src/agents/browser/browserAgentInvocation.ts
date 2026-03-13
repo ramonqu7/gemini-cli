@@ -230,6 +230,7 @@ export class BrowserAgentInvocation extends BaseToolInvocation<
   ): Promise<ToolResult> {
     let browserManager;
     let recentActivity: SubagentActivityItem[] = [];
+    let tokenCount = 0;
 
     try {
       if (updateOutput) {
@@ -281,6 +282,14 @@ export class BrowserAgentInvocation extends BaseToolInvocation<
         let updated = false;
 
         switch (activity.type) {
+          case 'TOKEN_UPDATE': {
+            const total = Number(activity.data['totalTokenCount']) || 0;
+            if (total > tokenCount) {
+              tokenCount = total;
+            }
+            updated = true;
+            break;
+          }
           case 'THOUGHT_CHUNK': {
             const text = String(activity.data['text']);
             const lastItem = recentActivity[recentActivity.length - 1];
@@ -407,6 +416,7 @@ export class BrowserAgentInvocation extends BaseToolInvocation<
             agentName: this['_toolName'] ?? 'browser_agent',
             recentActivity: [...recentActivity],
             state: 'running',
+            ...(tokenCount > 0 && { tokenCount }),
           };
           updateOutput(progress);
         }
@@ -443,6 +453,7 @@ ${displayResult}
           agentName: this['_toolName'] ?? 'browser_agent',
           recentActivity: [...recentActivity],
           state: 'completed',
+          ...(tokenCount > 0 && { tokenCount }),
         } as SubagentProgress);
       }
 
@@ -470,6 +481,7 @@ ${displayResult}
         agentName: this['_toolName'] ?? 'browser_agent',
         recentActivity: [...recentActivity],
         state: isAbort ? 'cancelled' : 'error',
+        ...(tokenCount > 0 && { tokenCount }),
       };
 
       if (updateOutput) {

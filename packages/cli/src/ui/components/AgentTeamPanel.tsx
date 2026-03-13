@@ -23,6 +23,22 @@ import type {
 import { useElapsedTime } from '../hooks/useElapsedTime.js';
 
 /**
+ * Formats a token count into a compact human-readable string.
+ * e.g., 500 -> "500", 1200 -> "1.2K", 45000 -> "45K", 1200000 -> "1.2M"
+ */
+function formatTokenCount(count: number): string {
+  if (count >= 1_000_000) {
+    const m = count / 1_000_000;
+    return m % 1 === 0 ? `${m}M` : `${m.toFixed(1)}M`;
+  }
+  if (count >= 1_000) {
+    const k = count / 1_000;
+    return k % 1 === 0 ? `${k}K` : `${k.toFixed(1)}K`;
+  }
+  return String(count);
+}
+
+/**
  * Extracts active SubagentProgress entries from history and pending items.
  */
 function extractSubagentProgress(
@@ -133,6 +149,13 @@ const AgentRow: React.FC<AgentRowProps> = ({ progress }) => {
         <Box marginLeft={1} flexGrow={1} flexShrink={1}>
           <Text color={theme.text.secondary} wrap="truncate" dimColor>
             {activityText}
+          </Text>
+        </Box>
+      )}
+      {progress.tokenCount != null && progress.tokenCount > 0 && (
+        <Box marginLeft={1} flexShrink={0}>
+          <Text color={theme.text.secondary} dimColor>
+            {formatTokenCount(progress.tokenCount)} tokens
           </Text>
         </Box>
       )}

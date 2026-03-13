@@ -849,6 +849,13 @@ export class LocalAgentExecutor<TOutput extends z.ZodTypeAny> {
         if (text) {
           textResponse += text;
         }
+
+        // Emit token usage when available (typically in the final chunk).
+        if (chunk.usageMetadata?.totalTokenCount) {
+          this.emitActivity('TOKEN_UPDATE', {
+            totalTokenCount: chunk.usageMetadata.totalTokenCount,
+          });
+        }
       }
     }
 

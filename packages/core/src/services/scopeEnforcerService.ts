@@ -32,7 +32,11 @@ export class ScopeEnforcerService {
 
   isCommandAllowed(command: string): boolean {
     const trimmed = command.trim();
-    return !this.blockedCommands.some((blocked) => trimmed.includes(blocked));
+    return !this.blockedCommands.some((blocked) => {
+      const escaped = blocked.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp('(?:^|\\b)' + escaped + '(?:\\b|$)');
+      return pattern.test(trimmed);
+    });
   }
 
   isToolAllowed(toolName: string): boolean {

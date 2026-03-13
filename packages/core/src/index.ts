@@ -262,4 +262,5 @@ export * from './services/cronService.js';
 export * from './services/harnessConfig.js';
 export * from './services/budgetEnforcerService.js';
 export * from './services/scopeEnforcerService.js';
+export * from './services/conversationBranchService.js';
 export * from './tools/cron.js';

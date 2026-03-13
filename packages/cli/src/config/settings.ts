@@ -625,7 +625,7 @@ export function loadEnvironment(
 // Cache to store the results of loadSettings to avoid redundant disk I/O.
 // Lazily initialized to avoid calling createCache at module load time,
 // which breaks tests that mock @google/gemini-cli-core.
-let settingsCache: ReturnType<typeof createCache<string, LoadedSettings>> | null = null;
+let settingsCache: { getOrCreate: (key: string, factory: () => LoadedSettings) => LoadedSettings; clear: () => void } | null = null;
 function getSettingsCache() {
   if (!settingsCache) {
     settingsCache = createCache<string, LoadedSettings>({

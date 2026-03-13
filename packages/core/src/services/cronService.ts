@@ -458,10 +458,13 @@ export class CronService extends EventEmitter<CronServiceEvents> {
         continue;
       }
 
-      // Prevent double-fires within the same minute window.
       // Use deterministic jitter from the task ID to stagger fires.
+      // Fire once the current second is at or past the jitter offset,
+      // but only if we haven't already fired in this minute window.
+      // This window-based approach tolerates event loop lag that could
+      // cause the tick to miss the exact jitter second.
       const jitter = jitterFromId(task.id);
-      if (currentDate.getSeconds() !== jitter) {
+      if (currentDate.getSeconds() < jitter) {
         continue;
       }
 

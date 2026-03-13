@@ -880,38 +880,32 @@ class EditToolInvocation
         .getFileSystemService()
         .writeTextFile(this.resolvedPath, finalContent);
 
-      let displayResult: ToolResultDisplay;
-      if (editData.isNewFile) {
-        displayResult = `Created ${shortenPath(makeRelative(this.resolvedPath, this.config.getTargetDir()))}`;
-      } else {
-        // Generate diff for display, even though core logic doesn't technically need it
-        // The CLI wrapper will use this part of the ToolResult
-        const fileName = path.basename(this.resolvedPath);
-        const fileDiff = Diff.createPatch(
-          fileName,
-          editData.currentContent ?? '', // Should not be null here if not isNewFile
-          editData.newContent,
-          'Current',
-          'Proposed',
-          DEFAULT_DIFF_OPTIONS,
-        );
+      // Generate diff for display so the CLI renders a visual diff via DiffRenderer
+      const fileName = path.basename(this.resolvedPath);
+      const fileDiff = Diff.createPatch(
+        fileName,
+        editData.currentContent ?? '',
+        editData.newContent,
+        'Current',
+        'Proposed',
+        DEFAULT_DIFF_OPTIONS,
+      );
 
-        const diffStat = getDiffStat(
-          fileName,
-          editData.currentContent ?? '',
-          editData.newContent,
-          this.params.new_string,
-        );
-        displayResult = {
-          fileDiff,
-          fileName,
-          filePath: this.resolvedPath,
-          originalContent: editData.currentContent,
-          newContent: editData.newContent,
-          diffStat,
-          isNewFile: editData.isNewFile,
-        };
-      }
+      const diffStat = getDiffStat(
+        fileName,
+        editData.currentContent ?? '',
+        editData.newContent,
+        this.params.new_string,
+      );
+      const displayResult: ToolResultDisplay = {
+        fileDiff,
+        fileName,
+        filePath: this.resolvedPath,
+        originalContent: editData.currentContent,
+        newContent: editData.newContent,
+        diffStat,
+        isNewFile: editData.isNewFile,
+      };
 
       const llmSuccessMessageParts = [
         editData.isNewFile

@@ -64,6 +64,7 @@ import { vimCommand } from '../ui/commands/vimCommand.js';
 import { setupGithubCommand } from '../ui/commands/setupGithubCommand.js';
 import { terminalSetupCommand } from '../ui/commands/terminalSetupCommand.js';
 import { exportCommand } from '../ui/commands/exportCommand.js';
+import { branchCommand } from '../ui/commands/branchCommand.js';
 import { historyCommand } from '../ui/commands/historyCommand.js';
 import { loopCommand } from '../ui/commands/loopCommand.js';
 import { upgradeCommand } from '../ui/commands/upgradeCommand.js';
@@ -127,6 +128,7 @@ export class BuiltinCommandLoader implements ICommandLoader {
       ...(this.config?.isAgentsEnabled() ? [agentsCommand] : []),
       authCommand,
       bgCommand,
+      branchCommand,
       ...(this.config?.getCronService?.() ? [loopCommand] : []),
       bugCommand,
       {

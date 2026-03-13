@@ -641,7 +641,7 @@ const SETTINGS_SCHEMA = {
             label: 'Hide Context Window Percentage',
             category: 'UI',
             requiresRestart: false,
-            default: true,
+            default: false,
             description: 'Hides the context window usage percentage.',
             showInDialog: true,
           },
