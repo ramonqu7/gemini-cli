@@ -169,7 +169,8 @@ describe('<ToolGroupMessage />', () => {
       expect(output).toContain('successful-tool');
       expect(output).toContain('pending-tool');
       expect(output).toContain('error-tool');
-      expect(output).toMatchSnapshot();
+      // Normalize elapsed time to avoid flaky snapshots (0ms vs 1ms)
+      expect(output.replace(/in \d+ms/g, 'in 0ms')).toMatchSnapshot();
       unmount();
     });
 
