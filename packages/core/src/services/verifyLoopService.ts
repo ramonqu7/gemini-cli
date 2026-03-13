@@ -102,7 +102,6 @@ export class VerifyLoopService {
       return false;
     }
   // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-
     const filePath = args?.['file_path'] as string | undefined;
     if (!filePath) {
       return false;

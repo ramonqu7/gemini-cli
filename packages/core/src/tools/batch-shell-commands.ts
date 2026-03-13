@@ -65,7 +65,7 @@ class BatchShellCommandsToolInvocation extends BaseToolInvocation<
     return `Batch: ${cmdList}`;
   }
 
-  protected override getPolicyUpdateOptions(
+  override getPolicyUpdateOptions(
     outcome: ToolConfirmationOutcome,
   ): PolicyUpdateOptions | undefined {
     if (

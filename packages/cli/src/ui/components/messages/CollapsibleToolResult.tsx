@@ -14,7 +14,7 @@ import { useSettings } from '../../contexts/SettingsContext.js';
 import { useUIState } from '../../contexts/UIStateContext.js';
 import { CoreToolCallStatus } from '@google/gemini-cli-core';
 import { theme } from '../../semantic-colors.js';
-import { formatCommand } from '../../utils/keybindingUtils.js';
+import { formatCommand } from '../../key/keybindingUtils.js';
 import { Command } from '../../key/keyBindings.js';
 
 export interface CollapsibleToolResultProps extends ToolResultDisplayProps {

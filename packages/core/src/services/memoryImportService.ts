@@ -9,7 +9,7 @@ import * as path from 'node:path';
 import { debugLogger } from '../utils/debugLogger.js';
 
 const IMPORT_PATTERN =
-  /@(~\/[^\s]+|\.\/[^\s]+|\/[^\s]+|[a-zA-Z][^\s]*\.(md|txt|json|yaml|yml|toml))/g;
+  /(?<=^|\s)@(~\/[^\s]+|\.\/[^\s]+|\/[^\s]+|[a-zA-Z][^\s]*\.(md|txt|json|yaml|yml|toml))/g;
 const MAX_IMPORT_DEPTH = 5;
 const MAX_IMPORT_SIZE = 50_000; // 50KB per imported file
 

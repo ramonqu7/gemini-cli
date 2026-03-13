@@ -73,6 +73,18 @@
       "topK": 64
     }
   },
+  "gemini-3.1-flash": {
+    "model": "gemini-3.1-flash",
+    "generateContentConfig": {
+      "temperature": 1,
+      "topP": 0.95,
+      "thinkingConfig": {
+        "includeThoughts": true,
+        "thinkingLevel": "HIGH"
+      },
+      "topK": 64
+    }
+  },
   "gemini-2.5-pro": {
     "model": "gemini-2.5-pro",
     "generateContentConfig": {
@@ -123,8 +135,15 @@
       "topP": 1
     }
   },
+  "gemini-3.1-flash-base": {
+    "model": "gemini-3.1-flash",
+    "generateContentConfig": {
+      "temperature": 0,
+      "topP": 1
+    }
+  },
   "classifier": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1,
@@ -135,7 +154,7 @@
     }
   },
   "prompt-completion": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0.3,
       "topP": 1,
@@ -146,7 +165,7 @@
     }
   },
   "fast-ack-helper": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0.2,
       "topP": 1,
@@ -157,14 +176,14 @@
     }
   },
   "codebase-investigator": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0.1,
       "topP": 0.95
     }
   },
   "edit-corrector": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1,
@@ -174,7 +193,7 @@
     }
   },
   "summarizer-default": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1,
@@ -182,7 +201,7 @@
     }
   },
   "summarizer-shell": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1,
@@ -190,7 +209,7 @@
     }
   },
   "web-search": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1,
@@ -202,7 +221,7 @@
     }
   },
   "web-fetch": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1,
@@ -214,14 +233,14 @@
     }
   },
   "web-fetch-fallback": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1
     }
   },
   "loop-detection": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1
@@ -235,21 +254,21 @@
     }
   },
   "llm-edit-fixer": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1
     }
   },
   "next-speaker-checker": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1
     }
   },
   "auto-memory-evaluator": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {
       "temperature": 0,
       "topP": 1,
@@ -264,7 +283,7 @@
     "generateContentConfig": {}
   },
   "chat-compression-3-flash": {
-    "model": "gemini-3-flash-preview",
+    "model": "gemini-3.1-flash",
     "generateContentConfig": {}
   },
   "chat-compression-2.5-pro": {

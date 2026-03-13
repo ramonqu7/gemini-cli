@@ -94,6 +94,7 @@ export enum Command {
   RESTART_APP = 'app.restart',
   SUSPEND_APP = 'app.suspend',
   SHOW_SHELL_INPUT_UNFOCUS_WARNING = 'app.showShellUnfocusWarning',
+  TOGGLE_TOOL_EXPAND = 'app.toggleToolExpand',
 
   // Background Shell Controls
   BACKGROUND_SHELL_ESCAPE = 'background.escape',
@@ -386,6 +387,7 @@ export const defaultKeyBindingConfig: KeyBindingConfig = new Map([
   [Command.RESTART_APP, [new KeyBinding('r'), new KeyBinding('shift+r')]],
   [Command.SUSPEND_APP, [new KeyBinding('ctrl+z')]],
   [Command.SHOW_SHELL_INPUT_UNFOCUS_WARNING, [new KeyBinding('tab')]],
+  [Command.TOGGLE_TOOL_EXPAND, [new KeyBinding('alt+e')]],
 
   // Background Shell Controls
   [Command.BACKGROUND_SHELL_ESCAPE, [new KeyBinding('escape')]],
@@ -507,6 +509,7 @@ export const commandCategories: readonly CommandCategory[] = [
       Command.RESTART_APP,
       Command.SUSPEND_APP,
       Command.SHOW_SHELL_INPUT_UNFOCUS_WARNING,
+      Command.TOGGLE_TOOL_EXPAND,
     ],
   },
   {
@@ -614,6 +617,8 @@ export const commandDescriptions: Readonly<Record<Command, string>> = {
   [Command.SUSPEND_APP]: 'Suspend the CLI and move it to the background.',
   [Command.SHOW_SHELL_INPUT_UNFOCUS_WARNING]:
     'Show warning when trying to move focus away from shell input.',
+  [Command.TOGGLE_TOOL_EXPAND]:
+    'Toggle expansion of collapsed tool output.',
 
   // Background Shell Controls
   [Command.BACKGROUND_SHELL_ESCAPE]: 'Dismiss background shell list.',

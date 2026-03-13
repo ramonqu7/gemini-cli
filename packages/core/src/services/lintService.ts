@@ -148,10 +148,10 @@ export class LintService {
     ) {
       return {
         name: 'golangci-lint',
-        fixCommand: (filePath: string) =>
-          `golangci-lint run --fix ${filePath}`,
-        checkCommand: (filePath: string) =>
-          `golangci-lint run ${filePath}`,
+        fixCommand: (_filePath: string) =>
+          `golangci-lint run --fix ./...`,
+        checkCommand: (_filePath: string) =>
+          `golangci-lint run ./...`,
       };
     }
 
@@ -167,10 +167,10 @@ export class LintService {
     if (fs.existsSync(path.join(this.projectRoot, 'Cargo.toml'))) {
       return {
         name: 'clippy',
-        fixCommand: (filePath: string) =>
-          `cargo clippy --fix --allow-dirty -- ${filePath}`,
-        checkCommand: (filePath: string) =>
-          `cargo clippy -- ${filePath}`,
+        fixCommand: (_filePath: string) =>
+          `cargo clippy --fix --allow-dirty`,
+        checkCommand: (_filePath: string) =>
+          `cargo clippy`,
       };
     }
 

@@ -28,6 +28,7 @@ import {
   DEFAULT_GEMINI_MODEL_AUTO,
   isActiveModel,
   PREVIEW_GEMINI_3_1_MODEL,
+  PREVIEW_GEMINI_3_1_FLASH_MODEL,
   PREVIEW_GEMINI_3_1_CUSTOM_TOOLS_MODEL,
   isPreviewModel,
   isProModel,
@@ -145,12 +146,12 @@ describe('getDisplayString', () => {
   });
 
   it('should return concrete model name for pro alias', () => {
-    expect(getDisplayString(GEMINI_MODEL_ALIAS_PRO)).toBe(PREVIEW_GEMINI_MODEL);
+    expect(getDisplayString(GEMINI_MODEL_ALIAS_PRO)).toBe(PREVIEW_GEMINI_3_1_MODEL);
   });
 
   it('should return concrete model name for flash alias', () => {
     expect(getDisplayString(GEMINI_MODEL_ALIAS_FLASH)).toBe(
-      PREVIEW_GEMINI_FLASH_MODEL,
+      PREVIEW_GEMINI_3_1_FLASH_MODEL,
     );
   });
 

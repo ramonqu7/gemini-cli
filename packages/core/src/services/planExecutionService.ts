@@ -170,7 +170,6 @@ export class PlanExecutionService {
     this.plan.status = 'approved';
     this.plan.currentStep = 1;
     this.plan.steps[0].status = 'in_progress';
-    this.plan.status = 'executing';
 
     return this.plan;
   }

@@ -211,7 +211,13 @@ export class TeamKnowledgeService {
    * @param limit Maximum results to return (default 10).
    */
   search(query: string, limit: number = 10): TeamKnowledgeEntry[] {
-    if (!this.entriesCache || this.entriesCache.length === 0) {
+    if (this.entriesCache === null) {
+      debugLogger.debug(
+        'TeamKnowledge: search() called before loadFromSources(). Returning empty results.',
+      );
+      return [];
+    }
+    if (this.entriesCache.length === 0) {
       return [];
     }
 
@@ -302,6 +308,12 @@ export class TeamKnowledgeService {
    * @param query Optional query to filter relevant entries.
    */
   formatTeamContext(query: string): string {
+    if (this.entriesCache === null) {
+      debugLogger.debug(
+        'TeamKnowledge: formatTeamContext() called before loadFromSources(). Returning empty context.',
+      );
+      return '';
+    }
     const entries = query ? this.search(query, 5) : this.getTopEntries(5);
 
     if (entries.length === 0) return '';

@@ -647,11 +647,17 @@ export class BackgroundIngestionService {
       }
       context = `<recent_work>\n${sections.join('\n')}\n</recent_work>`;
 
-      // If still too large, hard-truncate
+      // If still too large, hard-truncate (UTF-8 safe)
       if (Buffer.byteLength(context, 'utf-8') > MAX_CONTEXT_BYTES) {
         const encoder = new TextEncoder();
         const encoded = encoder.encode(context);
-        const truncated = encoded.slice(0, MAX_CONTEXT_BYTES - 20);
+        let end = MAX_CONTEXT_BYTES - 20;
+        // Walk back to a valid UTF-8 character boundary: skip continuation
+        // bytes (0x80..0xBF) so we don't split a multi-byte sequence.
+        while (end > 0 && (encoded[end]! & 0xc0) === 0x80) {
+          end--;
+        }
+        const truncated = encoded.slice(0, end);
         context =
           new TextDecoder().decode(truncated) + '...\n</recent_work>';
       }

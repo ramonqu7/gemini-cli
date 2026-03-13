@@ -111,7 +111,7 @@ async function appendAutoMemory(filePath: string, fact: string): Promise<void> {
     );
     content =
       nonEntryLines
-        .filter((l) => l.trim().length > 0 || l === '')
+        .filter((l) => l.trim().length > 0)
         .join('\n')
         .trimEnd() +
       '\n' +

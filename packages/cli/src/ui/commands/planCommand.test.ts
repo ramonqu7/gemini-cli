@@ -18,11 +18,23 @@ import {
 } from '@google/gemini-cli-core';
 import { copyToClipboard } from '../utils/commandUtils.js';
 
+// Provide createCache synchronously via vi.hoisted so it's available at
+// module-load time (settings.ts calls createCache at the top level).
+const mocks = vi.hoisted(() => ({
+  createCache: () => ({
+    get: () => undefined,
+    set: () => {},
+    delete: () => false,
+    clear: () => {},
+  }),
+}));
+
 vi.mock('@google/gemini-cli-core', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@google/gemini-cli-core')>();
   return {
     ...actual,
+    createCache: mocks.createCache,
     coreEvents: {
       emitFeedback: vi.fn(),
     },

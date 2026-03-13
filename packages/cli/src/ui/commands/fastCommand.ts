@@ -5,8 +5,8 @@
  */
 
 import {
-  DEFAULT_GEMINI_MODEL,
-  DEFAULT_GEMINI_FLASH_MODEL,
+  PREVIEW_GEMINI_3_1_MODEL,
+  PREVIEW_GEMINI_3_1_FLASH_MODEL,
   getDisplayString,
   ModelSlashCommandEvent,
   logModelSlashCommand,
@@ -50,13 +50,13 @@ export const fastCommand: SlashCommand = {
 
     if (isCurrentlyFlash) {
       // Switch back to the previous model, or default pro.
-      newModel = previousModel ?? DEFAULT_GEMINI_MODEL;
+      newModel = previousModel ?? PREVIEW_GEMINI_3_1_MODEL;
       previousModel = null;
       modeLabel = 'quality mode';
     } else {
       // Remember the current model and switch to flash.
       previousModel = currentModel;
-      newModel = DEFAULT_GEMINI_FLASH_MODEL;
+      newModel = PREVIEW_GEMINI_3_1_FLASH_MODEL;
       modeLabel = 'fast mode';
     }
 

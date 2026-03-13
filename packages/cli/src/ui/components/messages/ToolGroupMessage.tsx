@@ -46,7 +46,6 @@ interface ToolGroupMessageProps {
   toolCalls: IndividualToolCallDisplay[];
   availableTerminalHeight?: number;
   terminalWidth: number;
-  onShellInputSubmit?: (input: string) => void;
   borderTop?: boolean;
   borderBottom?: boolean;
   isExpandable?: boolean;

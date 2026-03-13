@@ -71,6 +71,12 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
         model: 'gemini-3-flash-preview',
       },
     },
+    'gemini-3.1-pro-preview': {
+      extends: 'chat-base-3',
+      modelConfig: {
+        model: 'gemini-3.1-pro-preview',
+      },
+    },
     'gemini-2.5-pro': {
       extends: 'chat-base-2.5',
       modelConfig: {
@@ -105,7 +111,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     classifier: {
       extends: 'base',
       modelConfig: {
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-3-flash-preview',
         generateContentConfig: {
           maxOutputTokens: 1024,
           thinkingConfig: {
@@ -117,7 +123,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     'prompt-completion': {
       extends: 'base',
       modelConfig: {
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-3-flash-preview',
         generateContentConfig: {
           temperature: 0.3,
           maxOutputTokens: 16000,
@@ -130,7 +136,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     'fast-ack-helper': {
       extends: 'base',
       modelConfig: {
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-3-flash-preview',
         generateContentConfig: {
           temperature: 0.2,
           maxOutputTokens: 120,
@@ -143,7 +149,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     'codebase-investigator': {
       extends: 'base',
       modelConfig: {
-        model: 'gemini-2.0-flash',
+        model: 'gemini-3-flash-preview',
         generateContentConfig: {
           temperature: 0.1,
           topP: 0.95,
@@ -153,7 +159,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     'edit-corrector': {
       extends: 'base',
       modelConfig: {
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-3-flash-preview',
         generateContentConfig: {
           thinkingConfig: {
             thinkingBudget: 0,
@@ -164,7 +170,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     'summarizer-default': {
       extends: 'base',
       modelConfig: {
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-3-flash-preview',
         generateContentConfig: {
           maxOutputTokens: 2000,
         },
@@ -173,7 +179,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     'summarizer-shell': {
       extends: 'base',
       modelConfig: {
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-3-flash-preview',
         generateContentConfig: {
           maxOutputTokens: 2000,
         },
@@ -207,7 +213,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     'loop-detection-double-check': {
       extends: 'base',
       modelConfig: {
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-3.1-pro-preview',
       },
     },
     'llm-edit-fixer': {
@@ -221,7 +227,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     'auto-memory-evaluator': {
       extends: 'base',
       modelConfig: {
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-3-flash-preview',
         generateContentConfig: {
           maxOutputTokens: 256,
           thinkingConfig: {
@@ -232,7 +238,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     },
     'chat-compression-3-pro': {
       modelConfig: {
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-3.1-pro-preview',
       },
     },
     'chat-compression-3-flash': {
@@ -257,7 +263,7 @@ export const DEFAULT_MODEL_CONFIGS: ModelConfigServiceConfig = {
     },
     'chat-compression-default': {
       modelConfig: {
-        model: 'gemini-3-pro-preview',
+        model: 'gemini-3.1-pro-preview',
       },
     },
   },

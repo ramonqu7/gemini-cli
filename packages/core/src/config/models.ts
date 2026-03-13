@@ -9,6 +9,7 @@ export const PREVIEW_GEMINI_3_1_MODEL = 'gemini-3.1-pro-preview';
 export const PREVIEW_GEMINI_3_1_CUSTOM_TOOLS_MODEL =
   'gemini-3.1-pro-preview-customtools';
 export const PREVIEW_GEMINI_FLASH_MODEL = 'gemini-3-flash-preview';
+export const PREVIEW_GEMINI_3_1_FLASH_MODEL = 'gemini-3-flash-preview';
 export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-pro';
 export const DEFAULT_GEMINI_FLASH_MODEL = 'gemini-2.5-flash';
 export const DEFAULT_GEMINI_FLASH_LITE_MODEL = 'gemini-2.5-flash-lite';
@@ -19,11 +20,13 @@ export const VALID_GEMINI_MODELS = new Set([
   PREVIEW_GEMINI_3_1_MODEL,
   PREVIEW_GEMINI_3_1_CUSTOM_TOOLS_MODEL,
   PREVIEW_GEMINI_FLASH_MODEL,
+  PREVIEW_GEMINI_3_1_FLASH_MODEL,
   DEFAULT_GEMINI_MODEL,
   DEFAULT_GEMINI_FLASH_MODEL,
   DEFAULT_GEMINI_FLASH_LITE_MODEL,
 ]);
 
+export const PREVIEW_GEMINI_3_1_MODEL_AUTO = 'auto-gemini-3.1';
 export const PREVIEW_GEMINI_MODEL_AUTO = 'auto-gemini-3';
 export const DEFAULT_GEMINI_MODEL_AUTO = 'auto-gemini-2.5';
 
@@ -64,6 +67,12 @@ export function resolveModel(
 ): string {
   let resolved: string;
   switch (requestedModel) {
+    case PREVIEW_GEMINI_3_1_MODEL_AUTO: {
+      resolved = useCustomToolModel
+        ? PREVIEW_GEMINI_3_1_CUSTOM_TOOLS_MODEL
+        : PREVIEW_GEMINI_3_1_MODEL;
+      break;
+    }
     case PREVIEW_GEMINI_MODEL:
     case PREVIEW_GEMINI_MODEL_AUTO:
     case GEMINI_MODEL_ALIAS_AUTO:
@@ -82,7 +91,7 @@ export function resolveModel(
       break;
     }
     case GEMINI_MODEL_ALIAS_FLASH: {
-      resolved = PREVIEW_GEMINI_FLASH_MODEL;
+      resolved = PREVIEW_GEMINI_3_1_FLASH_MODEL;
       break;
     }
     case GEMINI_MODEL_ALIAS_FLASH_LITE: {
@@ -99,6 +108,7 @@ export function resolveModel(
     // Downgrade to stable models if user lacks preview access.
     switch (resolved) {
       case PREVIEW_GEMINI_FLASH_MODEL:
+      case PREVIEW_GEMINI_3_1_FLASH_MODEL:
         return DEFAULT_GEMINI_FLASH_MODEL;
       case PREVIEW_GEMINI_MODEL:
       case PREVIEW_GEMINI_3_1_MODEL:
@@ -134,6 +144,12 @@ export function resolveClassifierModel(
 ): string {
   if (modelAlias === GEMINI_MODEL_ALIAS_FLASH) {
     if (
+      requestedModel === PREVIEW_GEMINI_3_1_MODEL_AUTO ||
+      requestedModel === PREVIEW_GEMINI_3_1_MODEL
+    ) {
+      return PREVIEW_GEMINI_3_1_FLASH_MODEL;
+    }
+    if (
       requestedModel === DEFAULT_GEMINI_MODEL_AUTO ||
       requestedModel === DEFAULT_GEMINI_MODEL
     ) {
@@ -151,14 +167,16 @@ export function resolveClassifierModel(
 }
 export function getDisplayString(model: string) {
   switch (model) {
+    case PREVIEW_GEMINI_3_1_MODEL_AUTO:
+      return 'Auto (Gemini 3.1)';
     case PREVIEW_GEMINI_MODEL_AUTO:
       return 'Auto (Gemini 3)';
     case DEFAULT_GEMINI_MODEL_AUTO:
       return 'Auto (Gemini 2.5)';
     case GEMINI_MODEL_ALIAS_PRO:
-      return PREVIEW_GEMINI_MODEL;
+      return PREVIEW_GEMINI_3_1_MODEL;
     case GEMINI_MODEL_ALIAS_FLASH:
-      return PREVIEW_GEMINI_FLASH_MODEL;
+      return PREVIEW_GEMINI_3_1_FLASH_MODEL;
     case PREVIEW_GEMINI_3_1_CUSTOM_TOOLS_MODEL:
       return PREVIEW_GEMINI_3_1_MODEL;
     default:
@@ -178,7 +196,9 @@ export function isPreviewModel(model: string): boolean {
     model === PREVIEW_GEMINI_3_1_MODEL ||
     model === PREVIEW_GEMINI_3_1_CUSTOM_TOOLS_MODEL ||
     model === PREVIEW_GEMINI_FLASH_MODEL ||
+    model === PREVIEW_GEMINI_3_1_FLASH_MODEL ||
     model === PREVIEW_GEMINI_MODEL_AUTO ||
+    model === PREVIEW_GEMINI_3_1_MODEL_AUTO ||
     model === GEMINI_MODEL_ALIAS_AUTO
   );
 }
@@ -246,6 +266,7 @@ export function supportsModernFeatures(model: string): boolean {
 export function isAutoModel(model: string): boolean {
   return (
     model === GEMINI_MODEL_ALIAS_AUTO ||
+    model === PREVIEW_GEMINI_3_1_MODEL_AUTO ||
     model === PREVIEW_GEMINI_MODEL_AUTO ||
     model === DEFAULT_GEMINI_MODEL_AUTO
   );
@@ -259,7 +280,7 @@ export function isAutoModel(model: string): boolean {
  * @returns True if the model supports multimodal function responses.
  */
 export function supportsMultimodalFunctionResponse(model: string): boolean {
-  return model.startsWith('gemini-3-');
+  return model.startsWith('gemini-3-') || model.startsWith('gemini-3.');
 }
 
 /**

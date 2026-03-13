@@ -346,6 +346,8 @@ export class GeminiClient {
     this.config.getPlanExecutionService?.()?.reset?.();
     this.config.getDynamicContextService?.()?.reset?.();
     this.config.getFileReadTracker?.()?.reset?.();
+    this.smartContextService.reset();
+    this.config.getBudgetEnforcer?.()?.reset?.();
 
     // Reset JIT context loaded paths so subdirectory context can be
     // re-discovered in the new session.
