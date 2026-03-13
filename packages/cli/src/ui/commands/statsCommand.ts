@@ -283,6 +283,7 @@ export const statsCommand: SlashCommand = {
     'Check session stats. Usage: /stats [session|model|tools|detail|team]',
   kind: CommandKind.BUILT_IN,
   autoExecute: false,
+  isSafeConcurrent: true,
   action: async (context: CommandContext) => {
     await defaultSessionView(context);
   },
@@ -292,6 +293,7 @@ export const statsCommand: SlashCommand = {
       description: 'Show session-specific usage statistics',
       kind: CommandKind.BUILT_IN,
       autoExecute: true,
+      isSafeConcurrent: true,
       action: async (context: CommandContext) => {
         await defaultSessionView(context);
       },
@@ -301,6 +303,7 @@ export const statsCommand: SlashCommand = {
       description: 'Show model-specific usage statistics',
       kind: CommandKind.BUILT_IN,
       autoExecute: true,
+      isSafeConcurrent: true,
       action: (context: CommandContext) => {
         const { selectedAuthType, userEmail, tier } = getUserIdentity(context);
         const currentModel = context.services.config?.getModel();
@@ -324,6 +327,7 @@ export const statsCommand: SlashCommand = {
       description: 'Show tool-specific usage statistics',
       kind: CommandKind.BUILT_IN,
       autoExecute: true,
+      isSafeConcurrent: true,
       action: (context: CommandContext) => {
         context.ui.addItem({
           type: MessageType.TOOL_STATS,

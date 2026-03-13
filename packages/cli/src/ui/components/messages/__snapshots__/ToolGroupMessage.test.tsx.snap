@@ -76,6 +76,10 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders mixed tool calls incl
 │                                                                          │
 │ Test result                                                              │
 │ 1 line so far…                                                           │
+│                                                                          │
+│ o  write_file Write to file                                              │
+│                                                                          │
+│ Test result                                                              │
 ╰──────────────────────────────────────────────────────────────────────────╯
  ⊶ 1 running, 1 completed
 "
@@ -86,6 +90,10 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders multiple tool calls w
 │ ✓  successful-tool This tool succeeded                                   │
 │                                                                          │
 │ 1 line — Test result  (Alt+E to expand)                                  │
+│                                                                          │
+│ o  pending-tool This tool is pending                                     │
+│                                                                          │
+│ Test result                                                              │
 │                                                                          │
 │ x  error-tool This tool failed                                           │
 │                                                                          │

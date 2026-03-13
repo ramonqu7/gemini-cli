@@ -15,7 +15,7 @@ import { useUIState } from '../../contexts/UIStateContext.js';
 import { CoreToolCallStatus } from '@google/gemini-cli-core';
 import { theme } from '../../semantic-colors.js';
 import { formatCommand } from '../../utils/keybindingUtils.js';
-import { Command } from '../../../config/keyBindings.js';
+import { Command } from '../../key/keyBindings.js';
 
 export interface CollapsibleToolResultProps extends ToolResultDisplayProps {
   /** Tool call status — errors are always shown expanded. */

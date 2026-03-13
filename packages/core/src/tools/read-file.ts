@@ -14,8 +14,11 @@ import {
   type ToolInvocation,
   type ToolLocation,
   type ToolResult,
+  type PolicyUpdateOptions,
+  type ToolConfirmationOutcome,
 } from './tools.js';
 import { ToolErrorType } from './tool-error.js';
+import { buildFilePathArgsPattern } from '../policy/utils.js';
 
 import type { PartUnion } from '@google/genai';
 import {
@@ -33,6 +36,7 @@ import { READ_FILE_DEFINITION } from './definitions/coreTools.js';
 import { resolveToolDeclaration } from './definitions/resolver.js';
 import { prefetchServiceInstance } from '../services/prefetchServiceInstance.js';
 import { debugLogger } from '../utils/debugLogger.js';
+import { discoverJitContext, appendJitContext } from './jit-context.js';
 
 /**
  * Parameters for the ReadFile tool
@@ -88,6 +92,14 @@ class ReadFileToolInvocation extends BaseToolInvocation<
         line: this.params.start_line,
       },
     ];
+  }
+
+  override getPolicyUpdateOptions(
+    _outcome: ToolConfirmationOutcome,
+  ): PolicyUpdateOptions | undefined {
+    return {
+      argsPattern: buildFilePathArgsPattern(this.params.file_path),
+    };
   }
 
   async execute(): Promise<ToolResult> {
@@ -209,6 +221,12 @@ ${result.llmContent}`;
 
     // Track that this file has been read in the current session
     this.config.getFileReadTracker().recordRead(this.resolvedPath);
+
+    // Discover JIT subdirectory context for the accessed file path
+    const jitContext = await discoverJitContext(this.config, this.resolvedPath);
+    if (jitContext && typeof llmContent === 'string') {
+      llmContent = appendJitContext(llmContent, jitContext);
+    }
 
     return {
       llmContent,

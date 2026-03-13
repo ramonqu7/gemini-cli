@@ -10,6 +10,8 @@ import { theme } from '../semantic-colors.js';
 import { isNarrowWidth } from '../utils/isNarrowWidth.js';
 import { SectionHeader } from './shared/SectionHeader.js';
 import { useUIState } from '../contexts/UIStateContext.js';
+import { Command } from '../key/keyBindings.js';
+import { formatCommand } from '../key/keybindingUtils.js';
 
 type ShortcutItem = {
   key: string;
@@ -23,15 +25,36 @@ const buildShortcutItems = (): ShortcutItem[] => {
   return [
     { key: '!', description: 'shell mode' },
     { key: '@', description: 'select file or folder' },
-    { key: 'Esc Esc', description: 'clear & rewind' },
-    { key: 'Tab Tab', description: 'focus UI' },
-    { key: 'Ctrl+Y', description: 'YOLO mode' },
-    { key: 'Shift+Tab', description: 'cycle mode' },
-    { key: 'Ctrl+V', description: 'paste images' },
-    { key: `${altLabel}+M`, description: 'raw markdown mode' },
-    { key: 'Ctrl+R', description: 'reverse-search history' },
-    { key: 'Ctrl+X', description: 'open external editor' },
-    { key: 'Ctrl+Shift+E', description: 'expand/collapse tool output' },
+    { key: 'Double Esc', description: 'clear & rewind' },
+    {
+      key: formatCommand(Command.FOCUS_SHELL_INPUT),
+      description: 'focus UI',
+    },
+    { key: formatCommand(Command.TOGGLE_YOLO), description: 'YOLO mode' },
+    {
+      key: formatCommand(Command.CYCLE_APPROVAL_MODE),
+      description: 'cycle mode',
+    },
+    {
+      key: formatCommand(Command.PASTE_CLIPBOARD),
+      description: 'paste images',
+    },
+    {
+      key: formatCommand(Command.TOGGLE_MARKDOWN),
+      description: 'raw markdown mode',
+    },
+    {
+      key: formatCommand(Command.REVERSE_SEARCH),
+      description: 'reverse-search history',
+    },
+    {
+      key: formatCommand(Command.OPEN_EXTERNAL_EDITOR),
+      description: 'open external editor',
+    },
+    {
+      key: `${altLabel}+E`,
+      description: 'expand/collapse tool output',
+    },
   ];
 };
 

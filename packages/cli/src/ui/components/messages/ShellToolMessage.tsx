@@ -25,8 +25,16 @@ import type { ToolMessageProps } from './ToolMessage.js';
 import { ACTIVE_SHELL_MAX_LINES } from '../../constants.js';
 import { useAlternateBuffer } from '../../hooks/useAlternateBuffer.js';
 import { useUIState } from '../../contexts/UIStateContext.js';
-import { type Config, CoreToolCallStatus } from '@google/gemini-cli-core';
-import { calculateShellMaxLines } from '../../utils/toolLayoutUtils.js';
+import {
+  type Config,
+  ShellExecutionService,
+  CoreToolCallStatus,
+} from '@google/gemini-cli-core';
+import {
+  calculateShellMaxLines,
+  calculateToolContentMaxLines,
+  SHELL_CONTENT_OVERHEAD,
+} from '../../utils/toolLayoutUtils.js';
 import { useElapsedTime } from '../../hooks/useElapsedTime.js';
 
 export interface ShellToolMessageProps extends ToolMessageProps {
@@ -79,6 +87,47 @@ export const ShellToolMessage: React.FC<ShellToolMessageProps> = ({
     activeShellPtyId,
     embeddedShellFocused,
   );
+
+  const maxLines = calculateShellMaxLines({
+    status,
+    isAlternateBuffer,
+    isThisShellFocused,
+    availableTerminalHeight,
+    constrainHeight,
+    isExpandable,
+  });
+
+  const availableHeight = calculateToolContentMaxLines({
+    availableTerminalHeight,
+    isAlternateBuffer,
+    maxLinesLimit: maxLines,
+  });
+
+  React.useEffect(() => {
+    const isExecuting = status === CoreToolCallStatus.Executing;
+    if (isExecuting && ptyId) {
+      try {
+        const childWidth = terminalWidth - 4; // account for padding and borders
+        const finalHeight =
+          availableHeight ?? ACTIVE_SHELL_MAX_LINES - SHELL_CONTENT_OVERHEAD;
+
+        ShellExecutionService.resizePty(
+          ptyId,
+          Math.max(1, childWidth),
+          Math.max(1, finalHeight),
+        );
+      } catch (e) {
+        if (
+          !(
+            e instanceof Error &&
+            e.message.includes('Cannot resize a pty that has already exited')
+          )
+        ) {
+          throw e;
+        }
+      }
+    }
+  }, [ptyId, status, terminalWidth, availableHeight]);
 
   const { setEmbeddedShellFocused } = useUIActions();
   const wasFocusedRef = React.useRef(false);
@@ -175,14 +224,7 @@ export const ShellToolMessage: React.FC<ShellToolMessageProps> = ({
           hasFocus={isThisShellFocused}
           toolName={name}
           toolDescription={description}
-          maxLines={calculateShellMaxLines({
-            status,
-            isAlternateBuffer,
-            isThisShellFocused,
-            availableTerminalHeight,
-            constrainHeight,
-            isExpandable,
-          })}
+          maxLines={maxLines}
         />
         {isThisShellFocused && config && (
           <ShellInputPrompt

@@ -13,10 +13,11 @@ import {
   type ToolCallResponseInfo,
   type ToolResult,
   type Config,
+  type AgentLoopContext,
   type ToolLiveOutput,
 } from '../index.js';
+import { isAbortError } from '../utils/errors.js';
 import { SHELL_TOOL_NAME } from '../tools/tool-names.js';
-import { ShellToolInvocation } from '../tools/shell.js';
 import { DiscoveredMCPTool } from '../tools/mcp-tool.js';
 import { executeToolWithHooks } from '../core/coreToolHookTriggers.js';
 import {
@@ -51,7 +52,11 @@ export interface ToolExecutionContext {
 
 export class ToolExecutor {
   private readonly formatter = new ToolOutputFormatterService();
-  constructor(private readonly config: Config) {}
+  constructor(private readonly context: AgentLoopContext) {}
+
+  private get config(): Config {
+    return this.context.config;
+  }
 
   async execute(context: ToolExecutionContext): Promise<CompletedToolCall> {
     const { call, signal, outputUpdateHandler, onUpdateToolCall } = context;
@@ -91,43 +96,29 @@ export class ToolExecutor {
         let completedToolCall: CompletedToolCall;
 
         try {
-          let promise: Promise<ToolResult>;
-          if (invocation instanceof ShellToolInvocation) {
-            const setPidCallback = (pid: number) => {
-              const executingCall: ExecutingToolCall = {
-                ...call,
-                status: CoreToolCallStatus.Executing,
-                tool,
-                invocation,
-                pid,
-                startTime: 'startTime' in call ? call.startTime : undefined,
-              };
-              onUpdateToolCall(executingCall);
+          const setExecutionIdCallback = (executionId: number) => {
+            const executingCall: ExecutingToolCall = {
+              ...call,
+              status: CoreToolCallStatus.Executing,
+              tool,
+              invocation,
+              pid: executionId,
+              startTime: 'startTime' in call ? call.startTime : undefined,
             };
-            promise = executeToolWithHooks(
-              invocation,
-              toolName,
-              signal,
-              tool,
-              liveOutputCallback,
-              shellExecutionConfig,
-              setPidCallback,
-              this.config,
-              request.originalRequestName,
-            );
-          } else {
-            promise = executeToolWithHooks(
-              invocation,
-              toolName,
-              signal,
-              tool,
-              liveOutputCallback,
-              shellExecutionConfig,
-              undefined,
-              this.config,
-              request.originalRequestName,
-            );
-          }
+            onUpdateToolCall(executingCall);
+          };
+
+          const promise = executeToolWithHooks(
+            invocation,
+            toolName,
+            signal,
+            tool,
+            liveOutputCallback,
+            shellExecutionConfig,
+            setExecutionIdCallback,
+            this.config,
+            request.originalRequestName,
+          );
 
           const toolResult: ToolResult = await promise;
 
@@ -157,15 +148,17 @@ export class ToolExecutor {
           }
         } catch (executionError: unknown) {
           spanMetadata.error = executionError;
-          const isAbortError =
-            executionError instanceof Error &&
-            (executionError.name === 'AbortError' ||
+          const abortedByError =
+            isAbortError(executionError) ||
+            (executionError instanceof Error &&
               executionError.message.includes('Operation cancelled by user'));
 
-          if (signal.aborted || isAbortError) {
+          if (signal.aborted || abortedByError) {
             completedToolCall = await this.createCancelledResult(
               call,
-              'User cancelled tool execution.',
+              isAbortError(executionError)
+                ? 'Operation cancelled.'
+                : 'User cancelled tool execution.',
             );
           } else {
             const error =
@@ -204,7 +197,7 @@ export class ToolExecutor {
           toolName,
           callId,
           this.config.storage.getProjectTempDir(),
-          this.config.getSessionId(),
+          this.context.promptId,
         );
         outputFile = savedPath;
 
@@ -252,7 +245,7 @@ export class ToolExecutor {
             toolName,
             callId,
             this.config.storage.getProjectTempDir(),
-            this.config.getSessionId(),
+            this.context.promptId,
           );
           outputFile = savedPath;
 

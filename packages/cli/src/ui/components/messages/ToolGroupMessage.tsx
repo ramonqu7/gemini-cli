@@ -17,19 +17,22 @@ import { ToolMessage } from './ToolMessage.js';
 import { ShellToolMessage } from './ShellToolMessage.js';
 import { theme } from '../../semantic-colors.js';
 import { useConfig } from '../../contexts/ConfigContext.js';
-import { isShellTool, isThisShellFocused } from './ToolShared.js';
+import {
+  isShellTool,
+  isThisShellFocused,
+} from './ToolShared.js';
 import {
   shouldHideToolCall,
   CoreToolCallStatus,
 } from '@google/gemini-cli-core';
-import { ShowMoreLines } from '../ShowMoreLines.js';
 import { useUIState } from '../../contexts/UIStateContext.js';
+import { getToolGroupBorderAppearance } from '../../utils/borderStyles.js';
 import { useAlternateBuffer } from '../../hooks/useAlternateBuffer.js';
 import {
   calculateShellMaxLines,
   calculateToolContentMaxLines,
 } from '../../utils/toolLayoutUtils.js';
-import { getToolGroupBorderAppearance } from '../../utils/borderStyles.js';
+import { ShowMoreLines } from '../ShowMoreLines.js';
 import { useSettings } from '../../contexts/SettingsContext.js';
 import { CliSpinner } from '../CliSpinner.js';
 import { TOOL_STATUS } from '../../constants.js';
@@ -89,12 +92,12 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
 
   const config = useConfig();
   const {
-    constrainHeight,
     activePtyId,
     embeddedShellFocused,
     backgroundShells,
     pendingHistoryItems,
     thought,
+    constrainHeight,
   } = useUIState();
   const isAlternateBuffer = useAlternateBuffer();
 
@@ -125,10 +128,11 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
     () =>
       toolCalls.filter((t) => {
         const displayStatus = mapCoreStatusToDisplayStatus(t.status);
-        return (
-          displayStatus !== ToolCallStatus.Pending &&
-          displayStatus !== ToolCallStatus.Confirming
-        );
+        // We used to filter out Pending and Confirming statuses here to avoid
+        // duplication with the Global Queue, but this causes tools to appear to
+        // "vanish" from the context after approval.
+        // We now allow them to be visible here as well.
+        return displayStatus !== ToolCallStatus.Canceled;
       }),
 
     [toolCalls],
@@ -251,11 +255,15 @@ export const ToolGroupMessage: React.FC<ToolGroupMessageProps> = ({
         : `${(elapsedMs / 1000).toFixed(1)}s`
       : null;
 
-  // If all tools are filtered out (e.g., in-progress AskUser tools, confirming tools),
-  // only render if we need to close a border from previous
-  // tool groups. borderBottomOverride=true means we must render the closing border;
-  // undefined or false means there's nothing to display.
-  if (visibleToolCalls.length === 0 && borderBottomOverride !== true) {
+  // If all tools are filtered out (e.g., in-progress AskUser tools, low-verbosity
+  // internal errors, plan-mode hidden write/edit), we should not emit standalone
+  // border fragments. The only case where an empty group should render is the
+  // explicit "closing slice" (tools: []) used to bridge static/pending sections.
+  const isExplicitClosingSlice = allToolCalls.length === 0;
+  if (
+    visibleToolCalls.length === 0 &&
+    (!isExplicitClosingSlice || borderBottomOverride !== true)
+  ) {
     return null;
   }
 

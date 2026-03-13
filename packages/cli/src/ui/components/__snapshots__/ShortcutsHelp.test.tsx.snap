@@ -5,8 +5,8 @@ exports[`ShortcutsHelp > renders correctly in 'narrow' mode on 'linux' 1`] = `
  Shortcuts See /help for more
  ! shell mode
  @ select file or folder
- Esc Esc clear & rewind
- Tab Tab focus UI
+ Double Esc clear & rewind
+ Tab focus UI
  Ctrl+Y YOLO mode
  Shift+Tab cycle mode
  Ctrl+V paste images
@@ -22,8 +22,8 @@ exports[`ShortcutsHelp > renders correctly in 'narrow' mode on 'mac' 1`] = `
  Shortcuts See /help for more
  ! shell mode
  @ select file or folder
- Esc Esc clear & rewind
- Tab Tab focus UI
+ Double Esc clear & rewind
+ Tab focus UI
  Ctrl+Y YOLO mode
  Shift+Tab cycle mode
  Ctrl+V paste images
@@ -39,9 +39,9 @@ exports[`ShortcutsHelp > renders correctly in 'wide' mode on 'linux' 1`] = `
  Shortcuts See /help for more
  ! shell mode                    Shift+Tab cycle mode            Ctrl+V paste images
  @ select file or folder         Ctrl+Y YOLO mode                Alt+M raw markdown mode
- Esc Esc clear & rewind          Ctrl+R reverse-search history   Alt+E expand/collapse tool
+ Double Esc clear & rewind       Ctrl+R reverse-search history   Alt+E expand/collapse tool
                                                                        output
- Tab Tab focus UI                Ctrl+X open external editor
+ Tab focus UI                    Ctrl+X open external editor
 "
 `;
 
@@ -50,8 +50,8 @@ exports[`ShortcutsHelp > renders correctly in 'wide' mode on 'mac' 1`] = `
  Shortcuts See /help for more
  ! shell mode                    Shift+Tab cycle mode            Ctrl+V paste images
  @ select file or folder         Ctrl+Y YOLO mode                Option+M raw markdown mode
- Esc Esc clear & rewind          Ctrl+R reverse-search history   Option+E expand/collapse tool
+ Double Esc clear & rewind       Ctrl+R reverse-search history   Option+E expand/collapse tool
                                                                           output
- Tab Tab focus UI                Ctrl+X open external editor
+ Tab focus UI                    Ctrl+X open external editor
 "
 `;

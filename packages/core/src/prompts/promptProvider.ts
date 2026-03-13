@@ -7,7 +7,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import type { Config } from '../config/config.js';
 import type { HierarchicalMemory } from '../config/memory.js';
 import { GEMINI_DIR } from '../utils/paths.js';
 import { ApprovalMode } from '../policy/types.js';
@@ -29,11 +28,13 @@ import {
   GREP_TOOL_NAME,
 } from '../tools/tool-names.js';
 import { resolveModel, supportsModernFeatures } from '../config/models.js';
+import type { Config } from '../config/config.js';
 import { DiscoveredMCPTool } from '../tools/mcp-tool.js';
 import { getAllGeminiMdFilenames } from '../tools/memoryTool.js';
 import { RepoMapService } from '../services/repoMapService.js';
 import { detectRepoMapTrigger } from '../services/repoMapTrigger.js';
 import { OncallOrchestratorService } from '../services/oncallOrchestratorService.js';
+import type { AgentLoopContext } from '../config/agent-loop-context.js';
 
 /** Max repo map injection size in characters (~3KB). */
 const REPO_MAP_MAX_CHARS = 3072;
@@ -104,7 +105,7 @@ export class PromptProvider {
    * Generates the core system prompt.
    */
   getCoreSystemPrompt(
-    config: Config,
+    context: AgentLoopContext,
     userMemory?: string | HierarchicalMemory,
     interactiveOverride?: boolean,
   ): string {
@@ -112,18 +113,20 @@ export class PromptProvider {
       process.env['GEMINI_SYSTEM_MD'],
     );
 
-    const interactiveMode = interactiveOverride ?? config.isInteractive();
-    const approvalMode = config.getApprovalMode?.() ?? ApprovalMode.DEFAULT;
+    const interactiveMode =
+      interactiveOverride ?? context.config.isInteractive();
+    const approvalMode =
+      context.config.getApprovalMode?.() ?? ApprovalMode.DEFAULT;
     const isPlanMode = approvalMode === ApprovalMode.PLAN;
     const isYoloMode = approvalMode === ApprovalMode.YOLO;
-    const skills = config.getSkillManager().getSkills();
-    const toolNames = config.getToolRegistry().getAllToolNames();
+    const skills = context.config.getSkillManager().getSkills();
+    const toolNames = context.toolRegistry.getAllToolNames();
     const enabledToolNames = new Set(toolNames);
-    const approvedPlanPath = config.getApprovedPlanPath();
+    const approvedPlanPath = context.config.getApprovedPlanPath();
 
     const desiredModel = resolveModel(
-      config.getActiveModel(),
-      config.getGemini31LaunchedSync?.() ?? false,
+      context.config.getActiveModel(),
+      context.config.getGemini31LaunchedSync?.() ?? false,
     );
     const isModernModel = supportsModernFeatures(desiredModel);
     const activeSnippets = isModernModel ? snippets : legacySnippets;
@@ -132,7 +135,7 @@ export class PromptProvider {
     // --- Context Gathering ---
     let planModeToolsList = '';
     if (isPlanMode) {
-      const allTools = config.getToolRegistry().getAllTools();
+      const allTools = context.toolRegistry.getAllTools();
       planModeToolsList = allTools
         .map((t) => {
           if (t instanceof DiscoveredMCPTool) {
@@ -164,7 +167,7 @@ export class PromptProvider {
       );
       basePrompt = applySubstitutions(
         basePrompt,
-        config,
+        context.config,
         skillsPrompt,
         isModernModel,
       );
@@ -188,7 +191,7 @@ export class PromptProvider {
           contextFilenames,
         })),
         subAgents: this.withSection('agentContexts', () =>
-          config
+          context.config
             .getAgentRegistry()
             .getAllDefinitions()
             .map((d) => ({
@@ -223,6 +226,7 @@ export class PromptProvider {
             approvedPlan: approvedPlanPath
               ? { path: approvedPlanPath }
               : undefined,
+            taskTracker: context.config.isTrackerEnabled(),
           }),
           !isPlanMode,
         ),
@@ -230,7 +234,7 @@ export class PromptProvider {
           'planningWorkflow',
           () => {
             // Get step execution prompt if a plan is actively being executed
-            const planExecService = config.getPlanExecutionService?.();
+            const planExecService = context.config.getPlanExecutionService?.();
             const stepExecutionPrompt =
               planExecService?.isExecuting()
                 ? planExecService.getStepPrompt()
@@ -238,21 +242,24 @@ export class PromptProvider {
 
             return {
               planModeToolsList,
-              plansDir: config.storage.getPlansDir(),
-              approvedPlanPath: config.getApprovedPlanPath(),
+              plansDir: context.config.storage.getPlansDir(),
+              approvedPlanPath: context.config.getApprovedPlanPath(),
+              taskTracker: context.config.isTrackerEnabled(),
               stepExecutionPrompt,
             };
           },
           isPlanMode,
         ),
+        taskTracker: context.config.isTrackerEnabled(),
         operationalGuidelines: this.withSection(
           'operationalGuidelines',
           () => ({
             interactive: interactiveMode,
-            enableShellEfficiency: config.getEnableShellOutputEfficiency(),
-            interactiveShellEnabled: config.isInteractiveShellEnabled(),
-            lintPrompt: config.getLintService().formatLintPrompt(),
-            verifyPrompt: config.getVerifyLoopService().formatVerifyPrompt(),
+            enableShellEfficiency:
+              context.config.getEnableShellOutputEfficiency(),
+            interactiveShellEnabled: context.config.isInteractiveShellEnabled(),
+            lintPrompt: context.config.getLintService().formatLintPrompt(),
+            verifyPrompt: context.config.getVerifyLoopService().formatVerifyPrompt(),
           }),
         ),
         sandbox: this.withSection('sandbox', () => getSandboxMode()),
@@ -307,7 +314,10 @@ export class PromptProvider {
     );
     const isModernModel = supportsModernFeatures(desiredModel);
     const activeSnippets = isModernModel ? snippets : legacySnippets;
-    return activeSnippets.getCompressionPrompt(customInstructions);
+    return activeSnippets.getCompressionPrompt(
+      customInstructions,
+      config.getApprovedPlanPath(),
+    );
   }
 
   private withSection<T>(

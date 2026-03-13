@@ -9,9 +9,9 @@ import { ToolGroupMessage } from './ToolGroupMessage.js';
 import { renderWithProviders } from '../../../test-utils/render.js';
 import { createMockSettings } from '../../../test-utils/settings.js';
 import { StreamingState, type IndividualToolCallDisplay } from '../../types.js';
-import { OverflowProvider } from '../../contexts/OverflowContext.js';
 import { waitFor } from '../../../test-utils/async.js';
 import { CoreToolCallStatus } from '@google/gemini-cli-core';
+import { useOverflowState } from '../../contexts/OverflowContext.js';
 
 // Settings with collapseToolOutput disabled so overflow tests see full output.
 const expandedSettings = createMockSettings({
@@ -19,16 +19,14 @@ const expandedSettings = createMockSettings({
 });
 
 describe('ToolOverflowConsistencyChecks: ToolGroupMessage and ToolResultDisplay synchronization', () => {
-  it('should ensure explicit hasOverflow calculation is consistent with ToolResultDisplay truncation in Alternate Buffer (ASB) mode', async () => {
+  it('should ensure ToolGroupMessage correctly reports overflow to the global state in Alternate Buffer (ASB) mode', async () => {
     /**
      * Logic:
-     * 1. availableTerminalHeight(13) - staticHeight(3) = 10 lines per tool.
-     * 2. ASB mode reserves 1 + 6 = 7 lines.
-     * 3. Line budget = 10 - 7 = 3 lines.
-     * 4. 5 lines of output > 3 lines budget => hasOverflow should be TRUE.
+     * 1. availableTerminalHeight(13) - staticHeight(1) - ASB Reserved(6) = 6 lines per tool.
+     * 2. 10 lines of output > 6 lines budget => hasOverflow should be TRUE.
      */
 
-    const lines = Array.from({ length: 5 }, (_, i) => `line ${i + 1}`);
+    const lines = Array.from({ length: 10 }, (_, i) => `line ${i + 1}`);
     const resultDisplay = lines.join('\n');
 
     const toolCalls: IndividualToolCallDisplay[] = [
@@ -42,8 +40,15 @@ describe('ToolOverflowConsistencyChecks: ToolGroupMessage and ToolResultDisplay 
       },
     ];
 
-    const { lastFrame } = renderWithProviders(
-      <OverflowProvider>
+    let latestOverflowState: ReturnType<typeof useOverflowState>;
+    const StateCapture = () => {
+      latestOverflowState = useOverflowState();
+      return null;
+    };
+
+    const { unmount, waitUntilReady } = renderWithProviders(
+      <>
+        <StateCapture />
         <ToolGroupMessage
           item={{ id: 1, type: 'tool_group', tools: toolCalls }}
           toolCalls={toolCalls}
@@ -51,7 +56,7 @@ describe('ToolOverflowConsistencyChecks: ToolGroupMessage and ToolResultDisplay 
           terminalWidth={80}
           isExpandable={true}
         />
-      </OverflowProvider>,
+      </>,
       {
         settings: expandedSettings,
         uiState: {
@@ -62,24 +67,26 @@ describe('ToolOverflowConsistencyChecks: ToolGroupMessage and ToolResultDisplay 
       },
     );
 
-    // In ASB mode, the hint should appear because hasOverflow is now correctly calculated.
-    await waitFor(() =>
-      expect(lastFrame()?.toLowerCase()).toContain(
-        'press ctrl+o to show more lines',
-      ),
-    );
+    await waitUntilReady();
+
+    // To verify that the overflow state was indeed updated by the Scrollable component.
+    await waitFor(() => {
+      expect(latestOverflowState?.overflowingIds.size).toBeGreaterThan(0);
+    });
+
+    unmount();
   });
 
-  it('should ensure explicit hasOverflow calculation is consistent with ToolResultDisplay truncation in Standard mode', async () => {
+  it('should ensure ToolGroupMessage correctly reports overflow in Standard mode', async () => {
     /**
      * Logic:
-     * 1. availableTerminalHeight(13) - staticHeight(3) = 10 lines per tool.
-     * 2. Standard mode reserves 1 + 2 = 3 lines.
-     * 3. Line budget = 10 - 3 = 7 lines.
-     * 4. 9 lines of output > 7 lines budget => hasOverflow should be TRUE.
+     * 1. availableTerminalHeight(13) passed to ToolGroupMessage.
+     * 2. ToolGroupMessage subtracts its static height (2) => 11 lines available for tools.
+     * 3. ToolResultDisplay gets 11 lines, subtracts static height (1) and Standard Reserved (2) => 8 lines.
+     * 4. 15 lines of output > 8 lines budget => hasOverflow should be TRUE.
      */
 
-    const lines = Array.from({ length: 9 }, (_, i) => `line ${i + 1}`);
+    const lines = Array.from({ length: 15 }, (_, i) => `line ${i + 1}`);
     const resultDisplay = lines.join('\n');
 
     const toolCalls: IndividualToolCallDisplay[] = [
@@ -93,16 +100,14 @@ describe('ToolOverflowConsistencyChecks: ToolGroupMessage and ToolResultDisplay 
       },
     ];
 
-    const { lastFrame } = renderWithProviders(
-      <OverflowProvider>
-        <ToolGroupMessage
-          item={{ id: 1, type: 'tool_group', tools: toolCalls }}
-          toolCalls={toolCalls}
-          availableTerminalHeight={13}
-          terminalWidth={80}
-          isExpandable={true}
-        />
-      </OverflowProvider>,
+    const { lastFrame, unmount, waitUntilReady } = renderWithProviders(
+      <ToolGroupMessage
+        item={{ id: 1, type: 'tool_group', tools: toolCalls }}
+        toolCalls={toolCalls}
+        availableTerminalHeight={13}
+        terminalWidth={80}
+        isExpandable={true}
+      />,
       {
         settings: expandedSettings,
         uiState: {
@@ -113,11 +118,11 @@ describe('ToolOverflowConsistencyChecks: ToolGroupMessage and ToolResultDisplay 
       },
     );
 
+    await waitUntilReady();
+
     // Verify truncation is occurring (standard mode uses MaxSizedBox)
     await waitFor(() => expect(lastFrame()).toContain('hidden (Ctrl+O'));
 
-    // In Standard mode, ToolGroupMessage calculates hasOverflow correctly now.
-    // While Standard mode doesn't render the inline hint (ShowMoreLines returns null),
-    // the logic inside ToolGroupMessage is now synchronized.
+    unmount();
   });
 });
