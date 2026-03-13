@@ -127,6 +127,15 @@ export const ASK_USER_OPTION_PARAM_DESCRIPTION = 'description';
 export const EXIT_PLAN_MODE_TOOL_NAME = 'exit_plan_mode';
 export const EXIT_PLAN_PARAM_PLAN_PATH = 'plan_path';
 
+// -- cron_manage --
+export const CRON_TOOL_NAME = 'cron_manage';
+export const CRON_PARAM_ACTION = 'action';
+export const CRON_PARAM_CRON_EXPRESSION = 'cron_expression';
+export const CRON_PARAM_PROMPT = 'prompt';
+export const CRON_PARAM_RECURRING = 'recurring';
+export const CRON_PARAM_PERSISTENT = 'persistent';
+export const CRON_PARAM_TASK_ID = 'task_id';
+
 // -- enter_plan_mode --
 export const ENTER_PLAN_MODE_TOOL_NAME = 'enter_plan_mode';
 export const PLAN_MODE_PARAM_REASON = 'reason';

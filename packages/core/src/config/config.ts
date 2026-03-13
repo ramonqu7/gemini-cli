@@ -37,6 +37,7 @@ import { ExitPlanModeTool } from '../tools/exit-plan-mode.js';
 import { EnterPlanModeTool } from '../tools/enter-plan-mode.js';
 import { BatchReadFilesTool } from '../tools/batch-read-files.js';
 import { BatchShellCommandsTool } from '../tools/batch-shell-commands.js';
+import { CronTool } from '../tools/cron.js';
 import { GeminiClient } from '../core/client.js';
 import { BaseLlmClient } from '../core/baseLlmClient.js';
 import { LocalLiteRtLmClient } from '../core/localLiteRtLmClient.js';
@@ -163,7 +164,14 @@ import { PlanExecutionService } from '../services/planExecutionService.js';
 import { LintService } from '../services/lintService.js';
 import { VerifyLoopService } from '../services/verifyLoopService.js';
 import { FileReadTracker } from '../services/fileReadTracker.js';
+import { BackgroundIngestionService } from '../services/backgroundIngestionService.js';
+import { isGitRepository } from '../utils/gitUtils.js';
 import type { AgentLoopContext } from './agent-loop-context.js';
+import { AutoMemoryService } from '../services/autoMemoryService.js';
+import { GitSafetyService } from '../services/gitSafetyService.js';
+import { KnowledgeBaseService } from '../services/knowledgeBaseService.js';
+import { RepoMapService } from '../services/repoMapService.js';
+import { ToolOutputFormatterService } from '../services/toolOutputFormatterService.js';
 
 export interface AccessibilitySettings {
   /** @deprecated Use ui.loadingPhrases instead. */
@@ -421,6 +429,7 @@ import {
 } from '../services/harnessConfig.js';
 import { BudgetEnforcerService } from '../services/budgetEnforcerService.js';
 import { ScopeEnforcerService } from '../services/scopeEnforcerService.js';
+import { ToolPermissionService } from '../services/toolPermissionService.js';
 
 export type { FileFilteringOptions };
 export {
@@ -742,6 +751,7 @@ export class Config implements McpContext, AgentLoopContext {
   private cronService: CronService | null = null;
   private budgetEnforcer: BudgetEnforcerService | null = null;
   private scopeEnforcer: ScopeEnforcerService | null = null;
+  private toolPermissionService: ToolPermissionService | null = null;
 
   private _activeModel: string;
   private readonly maxSessionTurns: number;
@@ -880,6 +890,12 @@ export class Config implements McpContext, AgentLoopContext {
   private readonly lintService: LintService;
   private readonly verifyLoopService: VerifyLoopService;
   private readonly thinkingSettings: ThinkingSettings;
+  private readonly backgroundIngestionService: BackgroundIngestionService;
+  private readonly autoMemoryService: AutoMemoryService;
+  private _gitSafetyService?: GitSafetyService;
+  private _knowledgeBaseService?: KnowledgeBaseService;
+  private _repoMapService?: RepoMapService;
+  private _toolOutputFormatterService?: ToolOutputFormatterService;
 
   constructor(params: ConfigParameters) {
     this._sessionId = params.sessionId;
@@ -889,6 +905,8 @@ export class Config implements McpContext, AgentLoopContext {
     this.planExecutionService = new PlanExecutionService();
     this.lintService = new LintService(process.cwd());
     this.verifyLoopService = new VerifyLoopService(process.cwd());
+    this.backgroundIngestionService = new BackgroundIngestionService();
+    this.autoMemoryService = new AutoMemoryService();
     this.thinkingSettings = params.thinking ?? { dynamicBudget: true };
     this.embeddingModel =
       params.embeddingModel ?? DEFAULT_GEMINI_EMBEDDING_MODEL;
@@ -1063,6 +1081,9 @@ export class Config implements McpContext, AgentLoopContext {
     this.scopeEnforcer = new ScopeEnforcerService(
       this.harnessConfig.scope,
       this.cwd,
+    );
+    this.toolPermissionService = new ToolPermissionService(
+      this.harnessConfig.toolPermissions,
     );
     if (this.harnessConfig.loop.enabled) {
       const maxDurationMs =
@@ -1309,6 +1330,15 @@ export class Config implements McpContext, AgentLoopContext {
     }
 
     await this._geminiClient.initialize();
+
+    // Start background ingestion if running inside a git repository.
+    if (isGitRepository(this.cwd)) {
+      const userLdap = process.env['USER'] ?? '';
+      this.backgroundIngestionService.start(userLdap, this.cwd).catch((err) => {
+        debugLogger.debug('Background ingestion failed to start:', err);
+      });
+    }
+
     this.initialized = true;
   }
 
@@ -1361,6 +1391,9 @@ export class Config implements McpContext, AgentLoopContext {
 
     // Initialize BaseLlmClient now that the ContentGenerator is available
     this.baseLlmClient = new BaseLlmClient(this.contentGenerator, this);
+
+    // Wire BaseLlmClient into AutoMemoryService so it can evaluate turns
+    this.autoMemoryService.setBaseLlmClient(this.baseLlmClient);
 
     const codeAssistServer = getCodeAssistServer(this);
     const quotaPromise = codeAssistServer?.projectId
@@ -2507,6 +2540,58 @@ export class Config implements McpContext, AgentLoopContext {
     return this.verifyLoopService;
   }
 
+  /**
+   * Returns the auto memory service for extracting and storing user
+   * corrections and preferences across sessions.
+   */
+  getAutoMemoryService(): AutoMemoryService {
+    return this.autoMemoryService;
+  }
+
+  /**
+   * Returns the singleton GitSafetyService for checking destructive git
+   * operations.
+   */
+  getGitSafetyService(): GitSafetyService {
+    if (!this._gitSafetyService) {
+      this._gitSafetyService = new GitSafetyService();
+    }
+    return this._gitSafetyService;
+  }
+
+  /**
+   * Returns the lazily-initialized KnowledgeBaseService for persistent
+   * cross-session knowledge (user profile, project patterns, corrections).
+   */
+  getKnowledgeBaseService(): KnowledgeBaseService {
+    if (!this._knowledgeBaseService) {
+      this._knowledgeBaseService = new KnowledgeBaseService();
+    }
+    return this._knowledgeBaseService;
+  }
+
+  /**
+   * Returns the lazily-initialized RepoMapService for on-demand scoped
+   * repo-map generation.
+   */
+  getRepoMapService(): RepoMapService {
+    if (!this._repoMapService) {
+      this._repoMapService = new RepoMapService();
+    }
+    return this._repoMapService;
+  }
+
+  /**
+   * Returns the lazily-initialized ToolOutputFormatterService for
+   * intelligent truncation of tool outputs.
+   */
+  getToolOutputFormatterService(): ToolOutputFormatterService {
+    if (!this._toolOutputFormatterService) {
+      this._toolOutputFormatterService = new ToolOutputFormatterService();
+    }
+    return this._toolOutputFormatterService;
+  }
+
   getThinkingSettings(): ThinkingSettings {
     return this.thinkingSettings;
   }
@@ -2564,6 +2649,10 @@ export class Config implements McpContext, AgentLoopContext {
     return this.scopeEnforcer;
   }
 
+  getToolPermissionService(): ToolPermissionService | null {
+    return this.toolPermissionService;
+  }
+
   getHarnessConfig(): HarnessConfig {
     return this.harnessConfig;
   }
@@ -2613,6 +2702,14 @@ export class Config implements McpContext, AgentLoopContext {
    */
   getDynamicContextService(): DynamicContextService {
     return this.dynamicContextService;
+  }
+
+  /**
+   * Get the BackgroundIngestionService that learns about the user's recent
+   * CLs, code ownership patterns, and project structure.
+   */
+  getBackgroundIngestionService(): BackgroundIngestionService {
+    return this.backgroundIngestionService;
   }
 
   /**
@@ -3135,6 +3232,11 @@ export class Config implements McpContext, AgentLoopContext {
     maybeRegister(BatchShellCommandsTool, () =>
       registry.registerTool(new BatchShellCommandsTool(this, this.messageBus)),
     );
+    if (this.getCronService()) {
+      maybeRegister(CronTool, () =>
+        registry.registerTool(new CronTool(this, this.messageBus)),
+      );
+    }
     maybeRegister(MemoryTool, () =>
       registry.registerTool(new MemoryTool(this.messageBus)),
     );
@@ -3325,6 +3427,7 @@ export class Config implements McpContext, AgentLoopContext {
   async dispose(): Promise<void> {
     this.logCurrentModeDuration(this.getApprovalMode());
     coreEvents.off(CoreEvent.AgentsRefreshed, this.onAgentsRefreshed);
+    this.backgroundIngestionService.stop();
     this.agentRegistry?.dispose();
     this._geminiClient?.dispose();
     if (this.mcpClientManager) {

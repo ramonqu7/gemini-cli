@@ -31,7 +31,6 @@ import { resolveModel, supportsModernFeatures } from '../config/models.js';
 import type { Config } from '../config/config.js';
 import { DiscoveredMCPTool } from '../tools/mcp-tool.js';
 import { getAllGeminiMdFilenames } from '../tools/memoryTool.js';
-import { RepoMapService } from '../services/repoMapService.js';
 import { detectRepoMapTrigger } from '../services/repoMapTrigger.js';
 import { OncallOrchestratorService } from '../services/oncallOrchestratorService.js';
 import type { AgentLoopContext } from '../config/agent-loop-context.js';
@@ -46,7 +45,6 @@ const CHARS_PER_TOKEN = 4;
  * Orchestrates prompt generation by gathering context and building options.
  */
 export class PromptProvider {
-  private repoMapService = new RepoMapService();
   private oncallOrchestrator = new OncallOrchestratorService();
 
   /**
@@ -57,17 +55,19 @@ export class PromptProvider {
    *
    * @param prompt   The raw user prompt text.
    * @param rootDir  The project root directory.
+   * @param config   The runtime configuration (provides RepoMapService).
    */
-  async getRepoMapContext(prompt: string, rootDir: string): Promise<string> {
+  async getRepoMapContext(prompt: string, rootDir: string, config: Config): Promise<string> {
     const scope = detectRepoMapTrigger(prompt, rootDir);
     if (!scope) return '';
 
     try {
-      const map = await this.repoMapService.buildScopedMap(rootDir, scope);
+      const repoMapService = config.getRepoMapService();
+      const map = await repoMapService.buildScopedMap(rootDir, scope);
       if (map.files.length === 0) return '';
 
       const maxTokens = Math.floor(REPO_MAP_MAX_CHARS / CHARS_PER_TOKEN);
-      const condensed = this.repoMapService.getCondensedMap(map, maxTokens);
+      const condensed = repoMapService.getCondensedMap(map, maxTokens);
       if (!condensed.trim()) return '';
 
       return `<repo_map scope="${scope.kind}:${path.relative(rootDir, scope.target)}">\n${condensed}\n</repo_map>`;
@@ -78,8 +78,8 @@ export class PromptProvider {
   }
 
   /** Invalidate repo map cache for a directory (e.g. after file mutations). */
-  invalidateRepoMap(dirPath: string): void {
-    this.repoMapService.invalidateScope(dirPath);
+  invalidateRepoMap(dirPath: string, config: Config): void {
+    config.getRepoMapService().invalidateScope(dirPath);
   }
 
   /**

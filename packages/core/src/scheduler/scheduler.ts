@@ -596,11 +596,32 @@ export class Scheduler {
       return;
     }
 
+    // Tool Permission Rules (deny/allow/ask)
+    const toolPermissionService = this.config.getToolPermissionService();
+    const permissionDecision = toolPermissionService?.checkPermission(
+      toolCall.request.name,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+      (toolCall.request.args ?? {}) as Record<string, unknown>,
+    );
+
+    if (permissionDecision === 'deny') {
+      this.state.updateStatus(
+        callId,
+        CoreToolCallStatus.Error,
+        createErrorResponse(
+          toolCall.request,
+          new Error('Tool execution denied by tool permission rules.'),
+          ToolErrorType.POLICY_VIOLATION,
+        ),
+      );
+      return;
+    }
+
     // User Confirmation Loop
     let outcome = ToolConfirmationOutcome.ProceedOnce;
     let lastDetails: SerializableConfirmationDetails | undefined;
 
-    if (decision === PolicyDecision.ASK_USER) {
+    if (decision === PolicyDecision.ASK_USER && permissionDecision !== 'allow') {
       const result = await resolveConfirmation(toolCall, signal, {
         config: this.config,
         messageBus: this.messageBus,

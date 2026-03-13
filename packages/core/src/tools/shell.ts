@@ -44,7 +44,6 @@ import { SHELL_TOOL_NAME } from './tool-names.js';
 import type { MessageBus } from '../confirmation-bus/message-bus.js';
 import { getShellDefinition } from './definitions/coreTools.js';
 import { resolveToolDeclaration } from './definitions/resolver.js';
-import { getGitSafetyService } from '../services/gitSafetyService.js';
 import type { AgentLoopContext } from '../config/agent-loop-context.js';
 
 export const OUTPUT_UPDATE_INTERVAL_MS = 1000;
@@ -182,7 +181,7 @@ export class ShellToolInvocation extends BaseToolInvocation<
     }
 
     // Git safety check — enforced regardless of approval mode (even YOLO)
-    const gitSafety = getGitSafetyService().checkCommand(strippedCommand);
+    const gitSafety = this.context.config.getGitSafetyService().checkCommand(strippedCommand);
     if (!gitSafety.allowed) {
       const blockedMessage = `Git Safety: ${gitSafety.reason}${gitSafety.suggestion ? `\nSuggestion: ${gitSafety.suggestion}` : ''}`;
       return {

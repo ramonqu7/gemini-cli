@@ -95,6 +95,13 @@ export {
   BATCH_READ_PARAM_FILE_PATHS,
   BATCH_SHELL_COMMANDS_TOOL_NAME,
   BATCH_SHELL_PARAM_COMMANDS,
+  CRON_TOOL_NAME,
+  CRON_PARAM_ACTION,
+  CRON_PARAM_CRON_EXPRESSION,
+  CRON_PARAM_PROMPT,
+  CRON_PARAM_RECURRING,
+  CRON_PARAM_PERSISTENT,
+  CRON_PARAM_TASK_ID,
 } from './base-declarations.js';
 
 // Re-export sets for compatibility
@@ -237,6 +244,13 @@ export const BATCH_SHELL_COMMANDS_DEFINITION: ToolDefinition = {
     return DEFAULT_LEGACY_SET.batch_shell_commands;
   },
   overrides: (modelId) => getToolSet(modelId).batch_shell_commands,
+};
+
+export const CRON_DEFINITION: ToolDefinition = {
+  get base() {
+    return DEFAULT_LEGACY_SET.cron_manage;
+  },
+  overrides: (modelId) => getToolSet(modelId).cron_manage,
 };
 
 // ============================================================================

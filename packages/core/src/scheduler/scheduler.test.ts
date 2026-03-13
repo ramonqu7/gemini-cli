@@ -174,6 +174,7 @@ describe('Scheduler (Orchestrator)', () => {
       getEnableHooks: vi.fn().mockReturnValue(true),
       setApprovalMode: vi.fn(),
       getApprovalMode: vi.fn().mockReturnValue(ApprovalMode.DEFAULT),
+      getToolPermissionService: vi.fn().mockReturnValue(null),
     } as unknown as Mocked<Config>;
 
     (mockConfig as unknown as { config: Config }).config = mockConfig as Config;

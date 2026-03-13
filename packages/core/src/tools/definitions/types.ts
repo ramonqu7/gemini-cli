@@ -51,4 +51,5 @@ export interface CoreToolSet {
   activate_skill: (skillNames: string[]) => FunctionDeclaration;
   batch_read_files: FunctionDeclaration;
   batch_shell_commands: FunctionDeclaration;
+  cron_manage: FunctionDeclaration;
 }

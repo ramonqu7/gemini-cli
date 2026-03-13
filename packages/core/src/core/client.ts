@@ -763,6 +763,24 @@ export class GeminiClient {
       } catch {
         // Non-fatal: if dynamic context fails, proceed without it.
       }
+
+      // Inject background ingestion context (recent CLs, code ownership,
+      // project structure) when available.
+      try {
+        const ingestionService =
+          this.config.getBackgroundIngestionService();
+        const userPrompt = partListUnionToString(request);
+        const ingestionCtx =
+          ingestionService.formatIngestionContext(userPrompt);
+        if (ingestionCtx) {
+          this.getChat().addHistory({
+            role: 'user',
+            parts: [{ text: ingestionCtx }],
+          });
+        }
+      } catch {
+        // Non-fatal: ingestion context is best-effort.
+      }
     }
 
     // Re-initialize turn with fresh history.
@@ -1058,6 +1076,16 @@ export class GeminiClient {
         isInvalidStreamRetry,
         displayContent,
       );
+
+      // Fire-and-forget: evaluate whether to extract auto-memories from this turn
+      if (!isInvalidStreamRetry) {
+        const autoMemory = this.config.getAutoMemoryService();
+        if (autoMemory.isEnabled()) {
+          const userText = partListUnionToString(request);
+          const modelText = turn.getResponseText();
+          autoMemory.fireAndForget(userText, modelText);
+        }
+      }
 
       // Fire AfterAgent hook if we have a turn and no pending tools
       if (hooksEnabled && messageBus) {

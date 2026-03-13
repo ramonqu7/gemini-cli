@@ -77,6 +77,13 @@ import {
   BATCH_READ_PARAM_FILE_PATHS,
   BATCH_SHELL_COMMANDS_TOOL_NAME,
   BATCH_SHELL_PARAM_COMMANDS,
+  CRON_TOOL_NAME,
+  CRON_PARAM_ACTION,
+  CRON_PARAM_CRON_EXPRESSION,
+  CRON_PARAM_PROMPT,
+  CRON_PARAM_RECURRING,
+  CRON_PARAM_PERSISTENT,
+  CRON_PARAM_TASK_ID,
 } from '../base-declarations.js';
 import {
   getShellDeclaration,
@@ -768,6 +775,49 @@ The agent did not use the todo list because this task could be completed by a ti
         },
       },
       required: [BATCH_SHELL_PARAM_COMMANDS],
+    },
+  },
+
+  cron_manage: {
+    name: CRON_TOOL_NAME,
+    description:
+      'Manages scheduled cron tasks. Use action "create" to schedule a new task with a cron expression and prompt, "list" to view all tasks, or "delete" to remove a task by its ID.',
+    parametersJsonSchema: {
+      type: 'object',
+      properties: {
+        [CRON_PARAM_ACTION]: {
+          type: 'string',
+          enum: ['create', 'list', 'delete'],
+          description:
+            'The action to perform: "create" schedules a new task, "list" shows all tasks, "delete" removes a task.',
+        },
+        [CRON_PARAM_CRON_EXPRESSION]: {
+          type: 'string',
+          description:
+            'Required for "create". A standard 5-field cron expression (minute hour dom month dow). Example: "*/5 * * * *" for every 5 minutes.',
+        },
+        [CRON_PARAM_PROMPT]: {
+          type: 'string',
+          description:
+            'Required for "create". The prompt to execute when the task fires.',
+        },
+        [CRON_PARAM_RECURRING]: {
+          type: 'boolean',
+          description:
+            'Optional for "create". Whether the task should fire repeatedly. Defaults to true.',
+        },
+        [CRON_PARAM_PERSISTENT]: {
+          type: 'boolean',
+          description:
+            'Optional for "create". Whether the task survives session restarts. Defaults to false.',
+        },
+        [CRON_PARAM_TASK_ID]: {
+          type: 'string',
+          description:
+            'Required for "delete". The ID of the task to delete.',
+        },
+      },
+      required: [CRON_PARAM_ACTION],
     },
   },
 };

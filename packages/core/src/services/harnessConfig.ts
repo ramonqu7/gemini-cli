@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { ToolPermissionRule } from './toolPermissionService.js';
+
 /**
  * Budget limits for a harness session.
  */
@@ -50,6 +52,7 @@ export interface HarnessConfig {
   scope: HarnessScopeConfig;
   checkpoints: HarnessCheckpointConfig;
   loop: HarnessLoopConfig;
+  toolPermissions: ToolPermissionRule[];
 }
 
 /**
@@ -60,6 +63,7 @@ export type PartialHarnessConfig = {
   scope?: Partial<HarnessScopeConfig>;
   checkpoints?: Partial<HarnessCheckpointConfig>;
   loop?: Partial<HarnessLoopConfig>;
+  toolPermissions?: ToolPermissionRule[];
 };
 
 /**
@@ -88,6 +92,7 @@ export const DEFAULT_HARNESS_CONFIG: HarnessConfig = {
     defaultInterval: '10m',
     maxDuration: '3d',
   },
+  toolPermissions: [],
 };
 
 const DURATION_UNITS: Record<string, number> = {
@@ -152,6 +157,12 @@ export function mergeHarnessConfig(
     }
     if (override.loop) {
       Object.assign(result.loop, override.loop);
+    }
+    if (override.toolPermissions) {
+      result.toolPermissions = [
+        ...result.toolPermissions,
+        ...override.toolPermissions,
+      ];
     }
   }
 

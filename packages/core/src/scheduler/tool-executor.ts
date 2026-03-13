@@ -24,7 +24,6 @@ import {
   saveTruncatedToolOutput,
   formatTruncatedToolOutput,
 } from '../utils/fileUtils.js';
-import { ToolOutputFormatterService } from '../services/toolOutputFormatterService.js';
 import { convertToFunctionResponse } from '../utils/generateContentResponseUtilities.js';
 import {
   CoreToolCallStatus,
@@ -51,8 +50,11 @@ export interface ToolExecutionContext {
 }
 
 export class ToolExecutor {
-  private readonly formatter = new ToolOutputFormatterService();
   constructor(private readonly context: AgentLoopContext) {}
+
+  private get formatter() {
+    return this.config.getToolOutputFormatterService();
+  }
 
   private get config(): Config {
     return this.context.config;

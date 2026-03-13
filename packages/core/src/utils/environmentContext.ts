@@ -8,7 +8,6 @@ import type { Part, Content } from '@google/genai';
 import type { Config } from '../config/config.js';
 import { getFolderStructure } from './getFolderStructure.js';
 import { loadAutoMemories } from '../services/autoMemoryService.js';
-import { KnowledgeBaseService } from '../services/knowledgeBaseService.js';
 import { TeamKnowledgeService } from '../services/teamKnowledgeService.js';
 
 export const INITIAL_HISTORY_LENGTH = 1;
@@ -68,8 +67,7 @@ export async function getEnvironmentContext(config: Config): Promise<Part[]> {
     : '';
 
   // Load persistent knowledge base context (user profile, project patterns, corrections)
-  const knowledgeBase = new KnowledgeBaseService();
-  const knowledgeContext = await knowledgeBase
+  const knowledgeContext = await config.getKnowledgeBaseService()
     .formatKnowledgeContext(config.getWorkingDir())
     .catch(() => '');
 
