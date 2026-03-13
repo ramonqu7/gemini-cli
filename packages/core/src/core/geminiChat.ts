@@ -841,7 +841,7 @@ export class GeminiChat {
    * Extracts the text of the most recent user prompt from the request contents.
    * Returns undefined if no user text content is found.
    */
-  private extractLatestUserPrompt(contents: Content[]): string | undefined {
+  private extractLatestUserPrompt(contents: readonly Content[]): string | undefined {
     // Walk backwards to find the last user turn with text.
     for (let i = contents.length - 1; i >= 0; i--) {
       const content = contents[i];

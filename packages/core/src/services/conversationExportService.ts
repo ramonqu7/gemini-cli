@@ -96,7 +96,7 @@ function formatParts(parts: Content['parts']): string {
  * @returns The absolute path of the exported file.
  */
 export function exportConversationToMarkdown(
-  history: Content[],
+  history: readonly Content[],
   model: string,
   filename?: string,
 ): string {
