@@ -16,6 +16,7 @@ import { CoreToolCallStatus } from '@google/gemini-cli-core';
 import { theme } from '../../semantic-colors.js';
 import { formatCommand } from '../../key/keybindingUtils.js';
 import { Command } from '../../key/keyBindings.js';
+import { COLLAPSE_THRESHOLD_LINES } from '../../constants.js';
 
 export interface CollapsibleToolResultProps extends ToolResultDisplayProps {
   /** Tool call status — errors are always shown expanded. */
@@ -124,13 +125,27 @@ export const CollapsibleToolResult: React.FC<CollapsibleToolResultProps> = ({
   const isExecuting = status === CoreToolCallStatus.Executing;
   const hasNoResult = resultDisplay === undefined || resultDisplay === '';
 
-  // Only collapse completed, successful tool results
+  // Only collapse completed, successful tool results that exceed the line threshold.
+  // Short outputs (≤ COLLAPSE_THRESHOLD_LINES) are always shown inline so the user
+  // can see what each tool did without having to expand.
+  // Structured results (diffs, todos) are always shown inline — they're concise
+  // and seeing the actual diff is critical for understanding what changed.
+  const lineCount = countResultLines(resultDisplay);
+  const isShortOutput =
+    lineCount !== null && lineCount <= COLLAPSE_THRESHOLD_LINES;
+  const isStructuredResult =
+    resultDisplay != null &&
+    typeof resultDisplay === 'object' &&
+    !Array.isArray(resultDisplay) &&
+    ('fileDiff' in resultDisplay || 'todos' in resultDisplay);
   const shouldCollapse =
     collapseByDefault &&
     !isError &&
     !isCancelled &&
     !isExecuting &&
     !hasNoResult &&
+    !isShortOutput &&
+    !isStructuredResult &&
     status === CoreToolCallStatus.Success;
 
   // Show progress info while the tool is executing
@@ -145,14 +160,14 @@ export const CollapsibleToolResult: React.FC<CollapsibleToolResultProps> = ({
         </Box>
       ) : null;
     }
-    const lineCount = countResultLines(resultDisplay);
+    const executingLineCount = countResultLines(resultDisplay);
     return (
       <>
         <ToolResultDisplay resultDisplay={resultDisplay} {...restProps} />
-        {lineCount !== null && lineCount > 0 && (
+        {executingLineCount !== null && executingLineCount > 0 && (
           <Box height={1} overflow="hidden">
             <Text color={theme.text.secondary} dimColor wrap="truncate">
-              {lineCount} line{lineCount !== 1 ? 's' : ''} so far…
+              {executingLineCount} line{executingLineCount !== 1 ? 's' : ''} so far…
             </Text>
           </Box>
         )}

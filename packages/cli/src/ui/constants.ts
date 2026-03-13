@@ -53,6 +53,9 @@ export const COMPLETED_SHELL_MAX_LINES = 15;
 // Max lines to show for subagent results before collapsing
 export const SUBAGENT_MAX_LINES = 15;
 
+// Tool outputs with this many lines or fewer are always shown inline (never collapsed)
+export const COLLAPSE_THRESHOLD_LINES = 5;
+
 /** Minimum terminal width required to show the full context used label */
 export const MIN_TERMINAL_WIDTH_FOR_FULL_LABEL = 100;
 
