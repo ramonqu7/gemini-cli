@@ -61,6 +61,7 @@ import {
 import { coreEvents } from '../utils/events.js';
 import { ThinkingBudgetService } from '../services/thinkingBudgetService.js';
 import type { AgentLoopContext } from '../config/agent-loop-context.js';
+import { debugLogger } from '../utils/debugLogger.js';
 
 export enum StreamEventType {
   /** A regular content chunk from the API. */
@@ -640,6 +641,25 @@ export class GeminiChat {
 
       if (this.onModelChanged) {
         this.tools = await this.onModelChanged(modelToUse);
+      }
+
+      // Try to use prompt caching for the system instruction.
+      try {
+        const cachingService =
+          this.context.config.getPromptCachingService();
+        const cacheName = await cachingService.getOrCreateCache(
+          modelToUse,
+          this.systemInstruction,
+          '',  // memoryContent — not separately tracked here
+        );
+        if (cacheName) {
+          config.cachedContent = cacheName;
+        }
+      } catch (err) {
+        debugLogger.debug(
+          'Prompt caching failed (proceeding without cache):',
+          err,
+        );
       }
 
       // Track final request parameters for AfterModel hooks

@@ -66,7 +66,7 @@ describe('<ToolGroupMessage />', () => {
   });
   const fullVerbositySettings = createMockSettings({
     merged: {
-      ui: { errorVerbosity: 'full' },
+      ui: { errorVerbosity: 'full', collapseToolOutput: false },
     },
   });
   const lowVerbositySettings = createMockSettings({

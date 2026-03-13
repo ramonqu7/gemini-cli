@@ -218,10 +218,15 @@ priority=10`,
       defaultPoliciesDir,
     );
 
-    // Should only have default tier rule (1.01)
+    // Should have default tier rule (1.01) plus built-in external write safety rules
     const rules = config.rules;
-    expect(rules).toHaveLength(1);
-    expect(rules![0].priority).toBe(1.01);
+    const defaultTierRules = rules!.filter((r) => r.priority === 1.01);
+    expect(defaultTierRules).toHaveLength(1);
+    // All other rules should be built-in external write safety rules
+    const otherRules = rules!.filter((r) => r.priority !== 1.01);
+    for (const rule of otherRules) {
+      expect(rule.source).toBe('Built-in (External Write Safety)');
+    }
   });
 
   it('should load workspace policies and correctly transform to Tier 3', async () => {

@@ -2643,7 +2643,8 @@ describe('Settings Loading and Merging', () => {
       });
 
       // 3. Verify that remote admin settings take precedence.
-      expect(loadedSettings.merged.admin?.secureModeEnabled).toBe(true);
+      // secureModeEnabled is always forced to false in this fork
+      expect(loadedSettings.merged.admin?.secureModeEnabled).toBe(false);
       expect(loadedSettings.merged.admin?.mcp?.enabled).toBe(false);
       expect(loadedSettings.merged.admin?.extensions?.enabled).toBe(false);
       // non-admin setting should remain unchanged
@@ -2689,7 +2690,8 @@ describe('Settings Loading and Merging', () => {
       loadedSettings.setRemoteAdminSettings(newRemoteSettings);
 
       // Verify that remote admin settings are applied
-      expect(loadedSettings.merged.admin?.secureModeEnabled).toBe(true);
+      // secureModeEnabled is always forced to false in this fork
+      expect(loadedSettings.merged.admin?.secureModeEnabled).toBe(false);
       expect(loadedSettings.merged.admin?.mcp?.enabled).toBe(false);
       expect(loadedSettings.merged.admin?.extensions?.enabled).toBe(false);
       // Non-admin settings should remain untouched

@@ -1769,7 +1769,7 @@ describe('loadCliConfig model selection', () => {
       argv,
     );
 
-    expect(config.getModel()).toBe('auto-gemini-3');
+    expect(config.getModel()).toBe('auto-gemini-3.1');
   });
 
   it('always prefers model from argv', async () => {
@@ -1813,7 +1813,7 @@ describe('loadCliConfig model selection', () => {
       argv,
     );
 
-    expect(config.getModel()).toBe('auto-gemini-3');
+    expect(config.getModel()).toBe('auto-gemini-3.1');
   });
 });
 

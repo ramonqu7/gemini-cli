@@ -15,7 +15,13 @@ import {
   Kind,
 } from '@google/gemini-cli-core';
 import { renderWithProviders } from '../../../test-utils/render.js';
+import { createMockSettings } from '../../../test-utils/settings.js';
 import { tryParseJSON } from '../../../utils/jsonoutput.js';
+
+// Settings with collapseToolOutput disabled so tests can assert full output.
+const expandedSettings = createMockSettings({
+  merged: { ui: { collapseToolOutput: false } },
+});
 
 vi.mock('../GeminiRespondingSpinner.js', () => ({
   GeminiRespondingSpinner: () => <Text>MockRespondingSpinner</Text>,
@@ -457,6 +463,7 @@ describe('<ToolMessage />', () => {
         />,
         {
           uiActions,
+          settings: expandedSettings,
           uiState: {
             streamingState: StreamingState.Idle,
             constrainHeight: true,
@@ -493,6 +500,7 @@ describe('<ToolMessage />', () => {
         />,
         {
           uiActions,
+          settings: expandedSettings,
           uiState: { streamingState: StreamingState.Idle },
           width: 80,
           useAlternateBuffer: false,
@@ -521,6 +529,7 @@ describe('<ToolMessage />', () => {
         />,
         {
           uiActions,
+          settings: expandedSettings,
           uiState: { streamingState: StreamingState.Idle },
           width: 80,
           useAlternateBuffer: false,

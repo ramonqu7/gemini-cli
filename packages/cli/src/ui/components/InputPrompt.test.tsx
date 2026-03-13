@@ -1714,17 +1714,16 @@ describe('InputPrompt', () => {
 
         const isWhite =
           color === 'white' || color === '#ffffff' || color === '#fff';
-        const expectedBgColor = isWhite ? '#eeeeee' : '#1c1c1c';
+        // Safe background colors: #1c1c1c (28,28,28) for dark, #eeeeee (238,238,238) for light
+        const expectedBgCode = isWhite
+          ? '\x1b[48;2;238;238;238m'
+          : '\x1b[48;2;28;28;28m';
 
         await waitFor(() => {
           const frame = stdout.lastFrameRaw();
 
-          // Use chalk to get the expected background color escape sequence
-          const bgCheck = chalk.bgHex(expectedBgColor)(' ');
-          const bgCode = bgCheck.substring(0, bgCheck.indexOf(' '));
-
-          // Background color code should be present
-          expect(frame).toContain(bgCode);
+          // Background color code should be present (24-bit true color)
+          expect(frame).toContain(expectedBgCode);
           // Background characters should be rendered
           expect(frame).toContain('▀');
           expect(frame).toContain('▄');

@@ -1208,6 +1208,9 @@ ${JSON.stringify(
         count: 2,
       });
 
+      // Mock loop recovery to return null (max attempts exceeded) so LoopDetected is emitted
+      vi.spyOn(client['loopRecovery'], 'attemptRecovery').mockReturnValue(null);
+
       const abortSpy = vi.spyOn(AbortController.prototype, 'abort');
 
       // Act

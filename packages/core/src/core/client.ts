@@ -1023,6 +1023,18 @@ export class GeminiClient {
         }
       }
 
+      // Create a conversation waypoint for branch/rewind support.
+      // Captures the history snapshot *before* this user turn is processed.
+      if (promptTextForHistory.trim()) {
+        try {
+          const branchService = this.config.getConversationBranchService();
+          const currentHistory = [...this.getChat().getHistory()];
+          branchService.addWaypoint(promptTextForHistory, currentHistory);
+        } catch {
+          // Non-critical — waypoint failures must never block the conversation
+        }
+      }
+
       // Fire-and-forget: speculatively pre-fetch files the model is
       // likely to request based on the user's prompt.
       const promptText = partListUnionToString(request);

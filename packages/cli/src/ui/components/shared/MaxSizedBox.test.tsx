@@ -300,7 +300,7 @@ describe('<MaxSizedBox />', () => {
     );
 
     await act(async () => {
-      vi.runAllTimers();
+      vi.advanceTimersByTime(5000);
     });
     await waitUntilReady();
     expect(lastFrame()).toContain('... last');

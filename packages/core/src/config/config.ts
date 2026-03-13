@@ -173,6 +173,7 @@ import { KnowledgeBaseService } from '../services/knowledgeBaseService.js';
 import { RepoMapService } from '../services/repoMapService.js';
 import { ToolOutputFormatterService } from '../services/toolOutputFormatterService.js';
 import { ConversationBranchService } from '../services/conversationBranchService.js';
+import { PromptCachingService } from '../services/promptCachingService.js';
 
 export interface AccessibilitySettings {
   /** @deprecated Use ui.loadingPhrases instead. */
@@ -756,6 +757,7 @@ export class Config implements McpContext, AgentLoopContext {
   private scopeEnforcer: ScopeEnforcerService | null = null;
   private toolPermissionService: ToolPermissionService | null = null;
   private conversationBranchService: ConversationBranchService | null = null;
+  private readonly promptCachingService: PromptCachingService;
 
   private _activeModel: string;
   private readonly maxSessionTurns: number;
@@ -998,6 +1000,7 @@ export class Config implements McpContext, AgentLoopContext {
     this.disabledSkills = params.disabledSkills ?? [];
     this.adminSkillsEnabled = params.adminSkillsEnabled ?? true;
     this.modelAvailabilityService = new ModelAvailabilityService();
+    this.promptCachingService = new PromptCachingService();
     this.experimentalJitContext = params.experimentalJitContext ?? false;
     this.modelSteering = params.modelSteering ?? false;
     this.userHintService = new UserHintService(() =>
@@ -1348,6 +1351,10 @@ export class Config implements McpContext, AgentLoopContext {
 
   getContentGenerator(): ContentGenerator {
     return this.contentGenerator;
+  }
+
+  getPromptCachingService(): PromptCachingService {
+    return this.promptCachingService;
   }
 
   async refreshAuth(

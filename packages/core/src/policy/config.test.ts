@@ -187,7 +187,11 @@ describe('createPolicyEngineConfig', () => {
       MOCK_DEFAULT_DIR,
     );
     expect(config.defaultDecision).toBe(PolicyDecision.ASK_USER);
-    expect(config.rules).toEqual([]);
+    // Built-in external write safety rules are always present
+    for (const rule of config.rules ?? []) {
+      expect(rule.source).toBe('Built-in (External Write Safety)');
+      expect(rule.decision).toBe(PolicyDecision.ASK_USER);
+    }
   });
 
   it('should allow tools in tools.allowed', async () => {
@@ -757,6 +761,7 @@ describe('getPolicyDirectories', () => {
     vi.spyOn(Storage, 'getSystemPoliciesDir').mockReturnValue(
       SYSTEM_POLICIES_DIR,
     );
+    vi.mocked(isDirectorySecure).mockResolvedValue({ secure: true });
   });
 
   it('should include default user policies directory when policyPaths is undefined', () => {

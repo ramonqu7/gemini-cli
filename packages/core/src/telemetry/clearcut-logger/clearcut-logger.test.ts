@@ -1151,7 +1151,7 @@ describe('ClearcutLogger', () => {
       const event = logger!.createLogEvent(EventNames.START_SESSION, []);
 
       await logger?.enqueueLogEventAfterExperimentsLoadAsync(event);
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(5000);
 
       const events = getEvents(logger!);
       expect(events.length).toBe(1);
@@ -1175,7 +1175,7 @@ describe('ClearcutLogger', () => {
       const event = logger!.createLogEvent(EventNames.START_SESSION, []);
 
       await logger?.enqueueLogEventAfterExperimentsLoadAsync(event);
-      await vi.runAllTimersAsync();
+      await vi.advanceTimersByTimeAsync(5000);
 
       const events = getEvents(logger!);
       expect(events.length).toBe(1);

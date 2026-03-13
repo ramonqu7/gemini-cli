@@ -20,6 +20,7 @@ import {
 } from './atCommandProcessor.js';
 import {
   FileDiscoveryService,
+  FileReadTracker,
   GlobTool,
   ReadManyFilesTool,
   StandardFileSystemService,
@@ -146,6 +147,7 @@ describe('handleAtCommand', () => {
         getClient: () => undefined,
       }),
       getMessageBus: () => mockMessageBus,
+      getFileReadTracker: () => new FileReadTracker(),
     } as unknown as Config;
 
     const registry = new ToolRegistry(mockConfig, mockMessageBus);

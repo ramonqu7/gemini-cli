@@ -258,6 +258,11 @@ export async function createContentGenerator(
         httpOptions,
         ...(apiVersionEnv && { apiVersion: apiVersionEnv }),
       });
+      try {
+        gcConfig.getPromptCachingService().setCaches(googleGenAI.caches);
+      } catch {
+        // Non-fatal: prompt caching is optional.
+      }
       return new LoggingContentGenerator(googleGenAI.models, gcConfig);
     }
     throw new Error(

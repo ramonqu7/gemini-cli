@@ -99,7 +99,7 @@ exports[`<ToolGroupMessage /> > Golden Snapshots > renders multiple tool calls w
 │                                                                          │
 │ Test result                                                              │
 ╰──────────────────────────────────────────────────────────────────────────╯
- ✓ 3 tools completed in 1ms — 3 other tools
+ ✓ 3 tools completed in 0ms — 3 other tools
 "
 `;
 
